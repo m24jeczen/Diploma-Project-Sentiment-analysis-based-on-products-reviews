@@ -10,7 +10,7 @@
     - Implementation: Preprocessing data from another source
     - Implementation: Sentiment analysis summary
     - Implementation: Sentiment analysis over time summary
-    - Implementation: Alternative to star ratings
+    - Implementation: Sentiment analysis ratings
 - 28.11 Lab 3: Code: Main modules implemented (no integration)
     - Implementation: Connect Amazon data -> preprocessing -> models -> analysis results
     - Implementation: Connect external data -> preprocessing -> models -> analysis results
