@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from codes.parameters import device
 from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
+from codes.parameters import roberta_model, bert_model_name, available_models
 from sklearn.model_selection import train_test_split
 from datasets import Dataset
 import torch
@@ -8,19 +9,20 @@ import torch
 # Function for downloading twitter model from hugging face. Can be used for other models but need to be tested.
 # model_name is for hugging face system downloading. model_local_path is for loading them later from local files.
 
-def download_and_save_twitter_model(model_name, model_local_path):
+def download_and_save_twitter_model():
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
-        model.save_pretrained(model_local_path)
-        tokenizer.save_pretrained(model_local_path)
-        print(f"Model {model_name} downloaded and saved.")
+        tokenizer = AutoTokenizer.from_pretrained(roberta_model.model_name)
+        model = AutoModelForSequenceClassification.from_pretrained(roberta_model.model_name)
+        model.save_pretrained(roberta_model.local_path)
+        tokenizer.save_pretrained(roberta_model.local_path)
+        available_models.append(roberta_model)
+        print(f"Model {roberta_model.model_name} downloaded and saved.")
     except:
-            print(f"Can't download {model_name}.")
+            print(f"Can't download {roberta_model.model_name}.")
             return 
             
-
-def download_and_tune_bert(model_name, model_local_path, data):
+# Function depends on added label tune to predict it and save it locally(genereally only for stars and sentiment 0 or 1)
+def download_and_tune_bert(model_local_path, data, label = "rating"):
     # Handling errors of wrong input data
     try:
          data=data[data["text"].str.split().str.len() >= 1]
@@ -28,19 +30,23 @@ def download_and_tune_bert(model_name, model_local_path, data):
     except:
          return "Invalid text data"
     try:
-         labels = [int(x)-1 for x in data.rating]
+        if label == "rating":
+            number_of_labels = 5
+            labels = [int(x)-1 for x in data.rating]
+        else:
+             labels = data[label]
+             number_of_labels = 2
     except:
-         return "Invalid rating data"
-    
+         return "Invalid data"
+
     # Train val splitting
     train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=0.2, random_state=42)
 
-    tokenizer = BertTokenizer.from_pretrained(model_name)
+    tokenizer = BertTokenizer.from_pretrained(bert_model_name)
 
     # Tokenizing texts
     train_encodings = tokenizer(train_texts, padding="max_length", truncation=True, max_length=128)
     val_encodings = tokenizer(val_texts, padding="max_length", truncation=True, max_length=128)
-    number_of_labels = data['rating'].nunique()
 
     def prepare_dataset(encodings, labels):
         return Dataset.from_dict({
@@ -53,7 +59,7 @@ def download_and_tune_bert(model_name, model_local_path, data):
         train_dataset = prepare_dataset(train_encodings, train_labels)
         val_dataset = prepare_dataset(val_encodings, val_labels)
 
-        model = BertForSequenceClassification.from_pretrained(model_name, num_labels=number_of_labels)
+        model = BertForSequenceClassification.from_pretrained(bert_model_name, num_labels=number_of_labels)
         model.to(device) 
 
 
@@ -88,6 +94,7 @@ def download_and_tune_bert(model_name, model_local_path, data):
         results = trainer.evaluate()
 
         trainer.save_model(model_local_path)
+        available_models.append()
 
     except:
         return "Wrong parameters or input data"

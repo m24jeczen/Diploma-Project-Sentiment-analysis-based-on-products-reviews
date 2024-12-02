@@ -15,7 +15,7 @@ def download_and_save_csv(category):
     os.makedirs(target_directory, exist_ok=True)
     # Preaparing url and downloading results
     reviews_url = f"https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_2023/raw/review_categories/{category}.jsonl.gz"
-    print(f"Downloading {category}")
+    print(f"Downloading {category} and preapering local files")
     reviews_response = requests.get(reviews_url)
     reviews_response.raise_for_status()  
     review_path = os.path.join(target_directory,category + ".csv")

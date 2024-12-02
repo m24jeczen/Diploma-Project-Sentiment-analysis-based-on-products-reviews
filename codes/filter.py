@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 import json, os
-from codes.downloader import load_store_data, load_products, load_reviews
+from codes.data_loader import load_store_data, load_products, load_reviews
 from codes.parameters import categories
 
 

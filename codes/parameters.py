@@ -13,9 +13,7 @@ class DownloadedModel:
 # Later will be list of models updated after every training of bert
 available_models = {}
 roberta_model = DownloadedModel(model_name = "cardiffnlp/twitter-roberta-base-sentiment", local_path = "models/twitter-roberta-sentiment")
-
-bert_model = DownloadedModel(model_name="bert-base-uncased", local_path="models/fine_tuned_bert")
-
+bert_model_name="bert-base-uncased"
 
 categories = [
     "All_Beauty",
