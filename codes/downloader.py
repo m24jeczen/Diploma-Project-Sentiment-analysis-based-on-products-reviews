@@ -1,17 +1,20 @@
 import requests
 import gzip
 import os
+import pandas as pd
+
 from io import BytesIO
+
  
-def load_and_save_category(category):
+def download_and_save_category(category):
 
     current_directory = os.getcwd()
 
     # Uzyskanie ścieżki dwa katalogi wyżej
-    two_levels_up = os.path.abspath(os.path.join(current_directory, ".."))
+    upper_catalog = os.path.abspath(os.path.join(current_directory, ".."))
 
     # Ścieżka do folderu, który chcesz utworzyć
-    target_directory = os.path.join(two_levels_up, "amazon_data")
+    target_directory = os.path.join(upper_catalog, "amazon_data")
 
     # Tworzenie folderu, jeśli nie istnieje
     os.makedirs(target_directory, exist_ok=True)
@@ -48,4 +51,23 @@ def load_and_save_category(category):
             jsonl_file.write(gz_file.read())
  
     print(f"File saved and loaded as {meta_extracted_filename}")
+    
+def load_products(category, products):
+    products = set(products)
+    upper_catalog = os.path.abspath(os.path.join(os.getcwd(), ".."))
+    meta_filename= "meta_" + category+".jsonl"
+    # Ścieżka do folderu, który chcesz utworzyć
+    target_directory = os.path.join(upper_catalog, "amazon_data")
+    meta_path = os.path.join(target_directory , meta_filename)
+    meta_data = pd.read_json(meta_path, lines=True)
+    #meta_data = meta_data[meta_data["title"].isin(products)]
+    products_ids = set(meta_data["parent_asin"])
+    print(products_ids)
+    review_filename = category + ".jsonl"
+    review_path = os.path.join(target_directory, review_filename)
+    review_data = pd.read_json(review_path, lines=True)
+    #review_data = review_data[review_data["parent_asin"].isin(products_ids)]
+    
+    return meta_data, review_data
+
  
