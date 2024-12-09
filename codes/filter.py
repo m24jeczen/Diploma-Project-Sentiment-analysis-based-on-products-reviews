@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 import json, os
-
+from parameters import target_directory
 
 def filter_by_date_range(df):
 
@@ -46,11 +46,7 @@ def filter_by_text_length(df):
     return filtered_df
 
 def load_choosen_products(category, product_names):
-    current_directory = os.getcwd()
-    upper_catalog = os.path.abspath(os.path.join(current_directory, ".."))
-    target_directory = os.path.join(upper_catalog, "amazon_data")
     meta_path, review_path = os.path.join(target_directory,"meta_" + category+".jsonl"), os.path.join(target_directory,category+".jsonl")
-
     product_ids = set()
     filtered_meta = []
     with open(meta_path, 'r', encoding='utf-8') as meta_file:

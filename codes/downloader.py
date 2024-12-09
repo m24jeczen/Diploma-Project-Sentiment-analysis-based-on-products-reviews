@@ -2,11 +2,12 @@ import requests
 import gzip
 import os
 import pandas as pd
-
 from io import BytesIO
+import json, csv
+from codes.parameters import target_directory
 
  
-def download_and_save_category(category):
+def download_source_data(category):
 
     current_directory = os.getcwd()
 
@@ -52,22 +53,34 @@ def download_and_save_category(category):
  
     print(f"File saved and loaded as {meta_extracted_filename}")
     
-def load_products(category, products):
-    products = set(products)
-    upper_catalog = os.path.abspath(os.path.join(os.getcwd(), ".."))
-    meta_filename= "meta_" + category+".jsonl"
-    # Ścieżka do folderu, który chcesz utworzyć
-    target_directory = os.path.join(upper_catalog, "amazon_data")
-    meta_path = os.path.join(target_directory , meta_filename)
-    meta_data = pd.read_json(meta_path, lines=True)
-    #meta_data = meta_data[meta_data["title"].isin(products)]
-    products_ids = set(meta_data["parent_asin"])
-    print(products_ids)
-    review_filename = category + ".jsonl"
-    review_path = os.path.join(target_directory, review_filename)
-    review_data = pd.read_json(review_path, lines=True)
-    #review_data = review_data[review_data["parent_asin"].isin(products_ids)]
+def create_local_data(category):
+    # Meta data not used yet maybe will be later
+    meta_path, review_path = os.path.join(target_directory,"meta_" + category+".csv"), os.path.join(target_directory,category+".jsonl")
+    output_file = os.path.join(target_directory,category + ".csv")
+    selected_columns = ["rating","text", "parent_asin","timestamp"]
+    data = []
+    with open(review_path, 'r', encoding='utf-8') as review_file:
+        for line in review_file:
+            if line.strip():  
+                try:
+                    record = json.loads(line)
+                    # Get selected parameters and load them to local csv
+                    selected_params = {field: record.get(field, "") for field in selected_columns}
+                    data.append(selected_params)
+                except json.JSONDecodeError as e:
+                    print(f"Problem with decoding meta line: {line}")
+    data = pd.DataFrame(data, columns=selected_columns)
+    data['timestamp'] = pd.to_datetime(data['timestamp'], unit='ms')
+    data.drop_duplicates(inplace=True)
+    aggregated = data.groupby('parent_asin').agg(
+        rating_number=('rating', 'size'),  # Liczba wierszy dla każdej grupy
+        average_rating=('rating', 'mean')  # Średnia wartość rating
+    ).reset_index()
+    data = data.merge(aggregated, on='parent_asin', how='left')
+    data.to_csv(output_file, index=False)
+
+
     
-    return meta_data, review_data
+
 
  
