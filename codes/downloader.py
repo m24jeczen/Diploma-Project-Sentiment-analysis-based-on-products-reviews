@@ -140,6 +140,17 @@ def load_store_data(category):
                
     return store_data
     
+def load_reviews(category):
+    if category not in categories:
+        print(f"Category {category} does not exist in available categories.")
+        return 
+    review_path = os.path.join(target_directory,f"{category}.csv")
+
+    if  not os.path.exists(review_path):
+        print(f"Store_data for {category}  is not available. Creating neccesary files.")
+        create_local_data(category)
+    
+    return pd.read_csv(review_path)
 
 
  
