@@ -115,7 +115,7 @@ def create_local_data(category):
     aggregated = create_aggregated_data_and_save_reviews_data(category)
     product_data = create_store_product_data(category)
     product_data = product_data.merge(aggregated, left_on='parent_asin', right_on='parent_asin')
-    product_file = os.path.join(target_directory,"product_"+category+".csv")
+    product_file = os.path.join(target_directory,f"product_{category}.csv")
     product_data.to_csv(product_file, index=False)
 
 
@@ -152,5 +152,15 @@ def load_reviews(category):
     
     return pd.read_csv(review_path)
 
+def load_products(category):
+    if category not in categories:
+        print(f"Category {category} does not exist in available categories.")
+        return 
+    product_path = os.path.join(target_directory,f"product_{category}.csv")
 
+    if  not os.path.exists(product_path):
+        print(f"Store_data for {category}  is not available. Creating neccesary files.")
+        create_local_data(category)
+    
+    return pd.read_csv(product_path)
  

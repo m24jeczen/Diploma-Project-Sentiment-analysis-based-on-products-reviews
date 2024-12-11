@@ -1,14 +1,18 @@
 import pandas as pd
 from datetime import datetime
 import json, os
-from codes.parameters import target_directory
-from codes.downloader import load_store_data
+from codes.downloader import load_store_data, load_products, load_reviews
+from codes.parameters import categories
 
 
 
 def filter(category, min_text_length = None, start_date = None, end_date = None, min_reviews_per_product = None, min_average_rating = None, store = None, search_value = None):
-    product_data = pd.read_csv(os.path.join(target_directory, f"product_{category}.csv")) 
-    review_data = pd.read_csv(os.path.join(target_directory, f"{category}.csv"))  
+    if category not in categories:
+        print(f"Category {category} doesn't exist.")
+        return
+    product_data = load_products(category)
+    review_data = load_reviews(category)  
+
 
     # Filtering with used parameteres. In later version will be implemented more elegant propably with object filter
     if store is not None:
@@ -29,13 +33,13 @@ def filter(category, min_text_length = None, start_date = None, end_date = None,
 
 
     if min_reviews_per_product is not None:
-        if not isinstance(min_reviews_per_product, int) and min_reviews_per_product <= 0:
+        if not isinstance(min_reviews_per_product, int) or min_reviews_per_product <= 0:
             print(f"{min_reviews_per_product} should be positivie integer.")
             return
         product_data = product_data[product_data["rating_number"] >= min_reviews_per_product]
 
     if min_average_rating is not None:
-        if not isinstance(min_average_rating, int) and not (1 <= min_average_rating <= 5):
+        if not isinstance(min_average_rating, (int, float)) or not (1 <= min_average_rating <= 5):
             print(f"{min_average_rating} should be anumber beetwen 1 and 5")
             return
         product_data = product_data[product_data["average_rating"] >= min_average_rating] 
@@ -55,7 +59,7 @@ def filter(category, min_text_length = None, start_date = None, end_date = None,
             return
     # min text length filtring
     if min_text_length is not None:
-        if not isinstance(min_text_length, int) and min_text_length <= 0:
+        if not isinstance(min_text_length, int) or min_text_length <= 0:
             print(f"{min_text_length} should be positivie integer.")
             return
         review_data = review_data[review_data["text"].str.split().str.len() >= min_text_length]

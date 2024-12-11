@@ -3,13 +3,12 @@ from codes.parameters import device, roberta_model,bert_model
 import torch
 
 def predict_on_roberta(data):
-
-    tokenizer = AutoTokenizer.from_pretrained(roberta_model.local_path)
-    model = AutoModelForSequenceClassification.from_pretrained(roberta_model.local_path)
     try:
+        tokenizer = AutoTokenizer.from_pretrained(roberta_model.local_path)
+        model = AutoModelForSequenceClassification.from_pretrained(roberta_model.local_path)
         inputs = tokenizer(list(data.text), padding=True, truncation=True, return_tensors="pt", max_length=128)
     except:
-        print("Invalid input data")
+        print("Invalid input dataor lack of model")
         return
     model.to(device)
     inputs = {key: val.to(device) for key, val in inputs.items()}
@@ -27,13 +26,13 @@ def predict_on_roberta(data):
     return mapped_predictions
 
 def predict_on_bert(data):
-    tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
-    model = BertForSequenceClassification.from_pretrained(bert_model.local_path)
-    model.to(device)
     try:
+        tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
+        model = BertForSequenceClassification.from_pretrained(bert_model.local_path)
+        model.to(device)
         inputs = tokenizer(list(data.text), padding=True, truncation=True, return_tensors="pt", max_length=128)
     except:
-        print("Invalid input data")
+        print("Invalid input data or lack of model")
     inputs = {key: val.to(device) for key, val in inputs.items()}
 
     model.eval()  
