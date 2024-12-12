@@ -329,25 +329,68 @@ def train_svm_classifier(X_train, y_train):
     return svm
 
 def lda_and_svm_pipeline(df, model, texts_bow, with_certain_words_removal=False, n_topics=15, test_size=0.2, random_state=42):
+    try:
+        print('---Begining SVM---')
 
-    print('---Begining SVM---')
-    df_with_topics = classification(df, model, texts_bow)
-    df_with_topics_and_words = add_top_words_to_df(df_with_topics, model, n_topics)
-    X, y, vectorizer = prepare_data_for_svm(df_with_topics_and_words)
+        # Check if the necessary columns are present in the dataframe
+        if 'rating' not in df.columns:
+            raise KeyError("Column 'rating' is missing in the input dataframe.")
+        if 'text' not in df.columns:
+            raise KeyError("Column 'text' is missing in the input dataframe.")
+        
+        # Check if the model and texts_bow are correctly passed
+        if model is None or texts_bow is None:
+            raise ValueError("Model or texts_bow data is missing. Please provide valid inputs.")
+        
+        # Step 1: Perform classification (this will assign topics to each document)
+        df_with_topics = classification(df, model, texts_bow)
+        
+        # Step 2: Add top words to the dataframe
+        df_with_topics_and_words = add_top_words_to_df(df_with_topics, model, n_topics)
+        
+        # Step 3: Prepare data for SVM
+        X, y, vectorizer = prepare_data_for_svm(df_with_topics_and_words)
 
-    print('---Train test splitting---')
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
+        # Step 4: Train-test splitting
+        print('---Train test splitting---')
+        try:
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
+        except ValueError as e:
+            print(f"Error during train-test splitting: {e}")
+            raise
 
-    print('---SVM training---')
-    svm = train_svm_classifier(X_train, y_train)
+        # Step 5: Train SVM model
+        print('---SVM training---')
+        try:
+            svm = train_svm_classifier(X_train, y_train)
+        except Exception as e:
+            print(f"Error during SVM training: {e}")
+            raise
 
-    print('---SVM predicting---')
-    y_pred = svm.predict(X_test)
+        # Step 6: Predict with the trained SVM model
+        print('---SVM predicting---')
+        try:
+            y_pred = svm.predict(X_test)
+        except Exception as e:
+            print(f"Error during SVM prediction: {e}")
+            raise
 
-    print("---Classification Report:---\n")
-    print(classification_report(y_test, y_pred))
+        # Step 7: Print classification report
+        print("---Classification Report:---\n")
+        print(classification_report(y_test, y_pred))
 
-    return svm, vectorizer, df_with_topics_and_words
+        return svm, vectorizer, df_with_topics_and_words
+
+    except KeyError as e:
+        print(f"KeyError: {e}")
+        raise  # Re-raise to propagate the error
+    except ValueError as e:
+        print(f"ValueError: {e}")
+        raise  # Re-raise to propagate the error
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise  # Re-raise to propagate the error
+
 
 
 
