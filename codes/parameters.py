@@ -11,9 +11,11 @@ class DownloadedModel:
         self.model_name = model_name
         self.local_path = local_path
 
-roberta_model = DownloadedModel(model_name = "cardiffnlp/twitter-roberta-base-sentiment", local_path = "../twitter-roberta-sentiment")
+# Later will be list of models updated after every training of bert
+roberta_model = DownloadedModel(model_name = "cardiffnlp/twitter-roberta-base-sentiment", local_path = "models/twitter-roberta-sentiment")
 
-bert_model = DownloadedModel(model_name="bert-base-uncased", local_path="../fine_tuned_bert")
+bert_model = DownloadedModel(model_name="bert-base-uncased", local_path="models/fine_tuned_bert")
+
 
 categories = [
     "All_Beauty",

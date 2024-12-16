@@ -9,15 +9,15 @@ from collections import defaultdict
 
  
 def download_source_data(category):
+     # Checking if input is available category
     if category not in categories:
         print(f"Category {category} does not exist in available categories.")
         return 
-    current_directory = os.getcwd()
-    upper_catalog = os.path.abspath(os.path.join(current_directory, ".."))
-    target_directory = os.path.join(upper_catalog, "amazon_data")
+    # Checking if folder for data esists
     os.makedirs(target_directory, exist_ok=True)
+
+    # Downloading and saving original review data
     reviews_url = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_2023/raw/review_categories/"
-    
     reviews_extracted_filename = category + ".jsonl"
     reviews_jsonl_file_path = os.path.join(target_directory, reviews_extracted_filename)
  
@@ -31,7 +31,8 @@ def download_source_data(category):
             jsonl_file.write(gz_file.read())
  
     print(f"File saved and loaded as {reviews_extracted_filename}")
-    
+
+    # Downloading and saving original meta data
     meta_url = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_2023/raw/meta_categories/"
 
     meta_extracted_filename = "meta_" + category + ".jsonl"
@@ -47,7 +48,7 @@ def download_source_data(category):
  
     print(f"File saved and loaded as {meta_extracted_filename}")
 
-
+# Function to save reviews locally in csv and return average rating and number of rating per product
 def create_aggregated_data_and_save_reviews_data(category):
     output_file = os.path.join(target_directory,category + ".csv")
     review_path= os.path.join(target_directory,category+".jsonl")
@@ -74,7 +75,7 @@ def create_aggregated_data_and_save_reviews_data(category):
 
     return aggregated
 
-
+# Function which create local data of stores and return data of products useful in bussines analysis of data
 def create_store_product_data(category):
     meta_path = os.path.join(target_directory,"meta_"+category+".jsonl")
     selected_columns = ["parent_asin", "title", "store"]
@@ -100,7 +101,7 @@ def create_store_product_data(category):
     return product_data
 
 
-    
+# Create 3 local datasets     
 def create_local_data(category):
     if category not in categories:
         print(f"Category {category} does not exist in available categories.")
@@ -118,7 +119,8 @@ def create_local_data(category):
     product_file = os.path.join(target_directory,f"product_{category}.csv")
     product_data.to_csv(product_file, index=False)
 
-
+    
+# Functions to load datasets
 def load_store_data(category):
     review_path, meta_path = os.path.join(target_directory,category+".jsonl"), os.path.join(target_directory,"meta_"+category+".jsonl")
     if not os.path.exists(review_path) or not os.path.exists(meta_path):
@@ -139,7 +141,7 @@ def load_store_data(category):
                 store_data[key.strip()] = set(values.strip().split(", "))
                
     return store_data
-    
+
 def load_reviews(category):
     if category not in categories:
         print(f"Category {category} does not exist in available categories.")

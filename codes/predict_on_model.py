@@ -2,6 +2,8 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Bert
 from codes.parameters import device, roberta_model,bert_model
 import torch
 
+
+# Function to predict on twitter model. There are fixed 3 labels which we would not change
 def predict_on_roberta(data):
     try:
         tokenizer = AutoTokenizer.from_pretrained(roberta_model.local_path)
@@ -25,6 +27,7 @@ def predict_on_roberta(data):
 
     return mapped_predictions
 
+# Function to predict starts for data on saved model. Will be changed to accept any saved loccaly model
 def predict_on_bert(data):
     try:
         tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
