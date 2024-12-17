@@ -31,8 +31,8 @@ def predict_on_roberta(data):
 # Function to predict starts for data on saved model. Will be changed to accept any saved loccaly model
 def predict_on_bert(data):
     try:
-        tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
-        model = BertForSequenceClassification.from_pretrained(bert_model.local_path)
+        tokenizer = AutoTokenizer.from_pretrained(bert_model.local_path)
+        model = AutoModelForSequenceClassification.from_pretrained(bert_model.local_path)
         model.to(device)
         inputs = tokenizer(list(data.text), padding=True, truncation=True, return_tensors="pt", max_length=128)
     except:

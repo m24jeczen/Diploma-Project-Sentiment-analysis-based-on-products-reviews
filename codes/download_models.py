@@ -27,8 +27,11 @@ def download_and_tune_bert(model_name, model_local_path, data):
          texts = list(data.text)
     except:
          return "Invalid text data"
+    try:
+         labels = [int(x)-1 for x in data.rating]
+    except:
+         return "Invalid rating data"
     
-    labels = data.rating
     # Train val splitting
     train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=0.2, random_state=42)
 
