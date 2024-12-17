@@ -23,3 +23,11 @@ def map_ratings_into_sentiment(data,positive_threshold = 4):
 
     data['star_based_sentiment'] = data['rating'].apply(lambda x: 1 if x >= positive_threshold else 0)
     return data
+
+# Ratings are from range 1 to 5 have to be in rage 0 to 4 for bert model
+def prepare_ratings(data):
+    try:
+        data["rating"] = [int(x)-1 for x in data.rating]
+    except:
+        return "Invalid rating data"
+    return data

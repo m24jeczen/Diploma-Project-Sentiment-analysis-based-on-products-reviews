@@ -28,11 +28,7 @@ def download_and_tune_bert(model_name, model_local_path, data):
     except:
          return "Invalid text data"
     
-    try:
-         labels = [int(x) for x in data.rating]
-    except:
-         return "Invalid rating data"
-    
+    labels = data.rating
     # Train val splitting
     train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=0.2, random_state=42)
 
@@ -41,7 +37,7 @@ def download_and_tune_bert(model_name, model_local_path, data):
     # Tokenizing texts
     train_encodings = tokenizer(train_texts, padding="max_length", truncation=True, max_length=128)
     val_encodings = tokenizer(val_texts, padding="max_length", truncation=True, max_length=128)
-    number_of_labels = data['texts'].nunique()
+    number_of_labels = data['rating'].nunique()
 
     def prepare_dataset(encodings, labels):
         return Dataset.from_dict({
