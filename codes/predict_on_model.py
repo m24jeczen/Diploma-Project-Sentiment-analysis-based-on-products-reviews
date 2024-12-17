@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, BertTokenizer, BertForSequenceClassification
+from nltk.sentiment import SentimentIntensityAnalyzer
 from codes.parameters import device, roberta_model,bert_model
-import torch
+import torch, nltk
 
 
 # Function to predict on twitter model. There are fixed 3 labels which we would not change
@@ -46,3 +47,14 @@ def predict_on_bert(data):
 
     return [x+1 for x in predictions.tolist()]
 
+def predict_on_vader(data):
+
+    # Make sure to download the VADER lexicon if not already downloaded
+    if not nltk.downloader.Downloader().is_installed('vader_lexicon'):
+        nltk.download('vader_lexicon')
+
+    sia = SentimentIntensityAnalyzer()
+    # Apply sentiment analysis to the dataset
+    data['sentiment'] = data['text'].apply(lambda x:1 if sia.polarity_scores(x)['compound']>=0 else 0)
+
+    return data

@@ -29,7 +29,7 @@ def download_and_tune_bert(model_name, model_local_path, data):
          return "Invalid text data"
     
     try:
-         labels = [int(x)-1 for x in data.rating]
+         labels = [int(x) for x in data.rating]
     except:
          return "Invalid rating data"
     
@@ -41,7 +41,7 @@ def download_and_tune_bert(model_name, model_local_path, data):
     # Tokenizing texts
     train_encodings = tokenizer(train_texts, padding="max_length", truncation=True, max_length=128)
     val_encodings = tokenizer(val_texts, padding="max_length", truncation=True, max_length=128)
-
+    number_of_labels = data['texts'].nunique()
 
     def prepare_dataset(encodings, labels):
         return Dataset.from_dict({
@@ -54,7 +54,7 @@ def download_and_tune_bert(model_name, model_local_path, data):
         train_dataset = prepare_dataset(train_encodings, train_labels)
         val_dataset = prepare_dataset(val_encodings, val_labels)
 
-        model = BertForSequenceClassification.from_pretrained(model_name, num_labels=5)
+        model = BertForSequenceClassification.from_pretrained(model_name, num_labels=number_of_labels)
         model.to(device) 
 
 
