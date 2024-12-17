@@ -3,8 +3,7 @@ import torch
 
 # Defining directory of the data
 current_directory = os.getcwd()
-upper_catalog = os.path.abspath(os.path.join(current_directory, ".."))
-target_directory = os.path.join(upper_catalog, "amazon_data") 
+target_directory = os.path.join(current_directory, "amazon_data") 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class DownloadedModel:
     def __init__(self, model_name, local_path):
@@ -12,6 +11,7 @@ class DownloadedModel:
         self.local_path = local_path
 
 # Later will be list of models updated after every training of bert
+available_models = {}
 roberta_model = DownloadedModel(model_name = "cardiffnlp/twitter-roberta-base-sentiment", local_path = "models/twitter-roberta-sentiment")
 
 bert_model = DownloadedModel(model_name="bert-base-uncased", local_path="models/fine_tuned_bert")

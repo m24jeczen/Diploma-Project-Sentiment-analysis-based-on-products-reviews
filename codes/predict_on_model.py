@@ -11,7 +11,7 @@ def predict_on_roberta(data):
         model = AutoModelForSequenceClassification.from_pretrained(roberta_model.local_path)
         inputs = tokenizer(list(data.text), padding=True, truncation=True, return_tensors="pt", max_length=128)
     except:
-        print("Invalid input dataor lack of model")
+        print("Invalid input data or lack of model")
         return
     model.to(device)
     inputs = {key: val.to(device) for key, val in inputs.items()}
@@ -20,11 +20,11 @@ def predict_on_roberta(data):
     with torch.no_grad():
         outputs = model(**inputs)
         logits = outputs.logits
-        predictions = torch.argmax(logits, dim=1)
 
-    label_map = {0: "negative", 1: "neutral", 2: "positive"}
-
-    mapped_predictions = [label_map[label] for label in predictions.tolist()]
+    mapped_predictions = [
+        "positive" if logit[2] > logit[0] else "negative" 
+        for logit in logits
+    ]
 
     return mapped_predictions
 
