@@ -7,21 +7,18 @@ import json
 from codes.parameters import target_directory, categories
 from collections import defaultdict
 
-
 def download_and_save_csv(category):
     if category not in categories:
         print(f"Category {category} does not exist in available categories.")
         return 
     # Checking if folder for data esists
     os.makedirs(target_directory, exist_ok=True)
-
     # Preaparing url and downloading results
     reviews_url = f"https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_2023/raw/review_categories/{category}.jsonl.gz"
-
     print(f"Downloading {category}")
     reviews_response = requests.get(reviews_url)
     reviews_response.raise_for_status()  
-    review_path = os.path.join(target_directory,f"{category}.csv")
+    review_path = os.path.join(target_directory,category + ".csv")
     selected_columns = ["rating","text", "parent_asin","timestamp"]
     review_data = []
     # Opening results and saving in csv file
@@ -45,7 +42,6 @@ def download_and_save_csv(category):
     meta_url = f"https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_2023/raw/meta_categories/meta_{category}.jsonl.gz"
     meta_response = requests.get(meta_url)
     meta_response.raise_for_status() 
-    selected_columns = ["parent_asin", "title", "store"]
     product_data = []
     store_data = defaultdict(set)
     with gzip.open(BytesIO(meta_response.content), "rt", encoding="utf-8") as gz_file:
@@ -58,7 +54,6 @@ def download_and_save_csv(category):
                     store_data[selected_params["store"]].add(selected_params["parent_asin"])
                 except json.JSONDecodeError as e:
                     print(f"Problem with decoding meta line: {line}")
-
     product_data = pd.DataFrame(product_data, columns=selected_columns)
 
     # Saving store data
