@@ -6,6 +6,7 @@ from io import BytesIO
 import json
 from codes.parameters import target_directory, categories
 from collections import defaultdict
+import csv
 
  
 def download_source_data(category):
@@ -47,6 +48,7 @@ def download_source_data(category):
             jsonl_file.write(gz_file.read())
  
     print(f"File saved and loaded as {meta_extracted_filename}")
+
 
 # Function to save reviews locally in csv and return average rating and number of rating per product
 def create_aggregated_data_and_save_reviews_data(category):
