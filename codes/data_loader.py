@@ -7,12 +7,12 @@ from codes.prepare_category import download_and_save_csv
 def load_store_data(category):
     review_path, meta_path = os.path.join(target_directory,category+".jsonl"), os.path.join(target_directory,"meta_"+category+".jsonl")
     if not os.path.exists(review_path) or not os.path.exists(meta_path):
-        print(f"Data {category}  is not available locally. Downloading neccesary files.")
+        print(f"Data {category} is not available locally. Downloading neccesary files.")
         download_and_save_csv(category)
 
     store_file= os.path.join(target_directory,"store_"+category+".txt")
     if not os.path.exists(store_file):
-        print(f"Store_data for {category}  is not available. Creating neccesary files.")
+        print(f"Store_data for {category} is not available. Creating neccesary files.")
         download_and_save_csv(category)
 
     store_data={}
@@ -32,7 +32,7 @@ def load_reviews(category):
     review_path = os.path.join(target_directory,f"{category}.csv")
 
     if  not os.path.exists(review_path):
-        print(f"Store_data for {category}  is not available. Creating neccesary files.")
+        print(f"Store_data for {category} is not available. Creating neccesary files.")
         download_and_save_csv(category)
     
     return pd.read_csv(review_path)
@@ -44,7 +44,7 @@ def load_products(category):
     product_path = os.path.join(target_directory,f"product_{category}.csv")
 
     if  not os.path.exists(product_path):
-        print(f"Store_data for {category}  is not available. Creating neccesary files.")
+        print(f"Store_data for {category} is not available. Creating neccesary files.")
         download_and_save_csv(category)
     
     return pd.read_csv(product_path)

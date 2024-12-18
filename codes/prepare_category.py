@@ -15,7 +15,7 @@ def download_and_save_csv(category):
     os.makedirs(target_directory, exist_ok=True)
     # Preaparing url and downloading results
     reviews_url = f"https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_2023/raw/review_categories/{category}.jsonl.gz"
-    print(f"Downloading {category} and preapering local files")
+    print(f"Downloading {category} and preparing local files")
     reviews_response = requests.get(reviews_url)
     reviews_response.raise_for_status()  
     review_path = os.path.join(target_directory,category + ".csv")
@@ -43,6 +43,7 @@ def download_and_save_csv(category):
     meta_response = requests.get(meta_url)
     meta_response.raise_for_status() 
     product_data = []
+    selected_columns = ["store","title", "parent_asin"]
     store_data = defaultdict(set)
     with gzip.open(BytesIO(meta_response.content), "rt", encoding="utf-8") as gz_file:
         for line in gz_file:
