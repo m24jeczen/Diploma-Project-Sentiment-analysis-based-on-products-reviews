@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 import json, os
-from codes.downloader import load_store_data, load_products, load_reviews
+from codes.data_loader import load_store_data, load_products, load_reviews
 from codes.parameters import categories
 
 
@@ -13,8 +13,8 @@ def filter(category, min_text_length = None, start_date = None, end_date = None,
     product_data = load_products(category)
     review_data = load_reviews(category)  
 
-
     # Filtering with used parameteres. In later version will be implemented more elegant propably with object filter
+    # Filtering by one choosen store to take only reviews from this store
     if store is not None:
         # store_data is a dict with key as a store name and value is set of products of the store
         store_data = load_store_data(category)
@@ -25,19 +25,21 @@ def filter(category, min_text_length = None, start_date = None, end_date = None,
         store_products=store_data[store]
         product_data = product_data[product_data["parent_asin"].isin(store_products)]
 
+    # Filtering for containing patterns in product tittle 
     if search_value is not None:
         if not isinstance(search_value, str):
             print(f"{search_value} should be a string.")
             return
         product_data=product_data[product_data["title"].str.contains(search_value, case=False, na=False)]
 
-
+    # minimal number of reviews per product filtering
     if min_reviews_per_product is not None:
         if not isinstance(min_reviews_per_product, int) or min_reviews_per_product <= 0:
             print(f"{min_reviews_per_product} should be positivie integer.")
             return
         product_data = product_data[product_data["rating_number"] >= min_reviews_per_product]
-
+        
+    # minimal average rating per product filtering
     if min_average_rating is not None:
         if not isinstance(min_average_rating, (int, float)) or not (1 <= min_average_rating <= 5):
             print(f"{min_average_rating} should be anumber beetwen 1 and 5")
