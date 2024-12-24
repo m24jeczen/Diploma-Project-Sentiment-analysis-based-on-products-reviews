@@ -1,6 +1,6 @@
 import pandas as pd
-from codes.filter import filter
-from codes.parameters import categories
+from codes.loading_and_filtering.filter import filter
+from codes.loading_and_filtering.parameters import categories
 category = categories[32]
 
 # Funkcja testująca różne przypadki użycia filter()

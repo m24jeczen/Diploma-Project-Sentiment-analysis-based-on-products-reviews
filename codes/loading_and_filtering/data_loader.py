@@ -1,7 +1,7 @@
 import os
 import pandas as pd
-from codes.parameters import target_directory, categories
-from codes.prepare_category import download_and_save_csv
+from codes.loading_and_filtering.parameters import target_directory, categories
+from codes.loading_and_filtering.prepare_category import download_and_save_csv
     
 # Functions to load datasets
 def load_store_data(category):
