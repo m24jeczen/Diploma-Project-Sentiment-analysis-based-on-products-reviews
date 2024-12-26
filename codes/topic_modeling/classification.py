@@ -26,8 +26,7 @@ def add_sentiment_column(df):
     return df
 
 def add_sentiment_column2(df):
-    df['sentiment'] = df['rating'].apply(lambda x: 'negative' if x <=2 else ('neutral' if x==3 else 'positive'))
-    df['sentiment_encoded'] = df['sentiment'].map({'negative': 0, 'neutral': 1, 'positive': 2})
+    df['sentiment'] = df['rating'].apply(lambda x: 'negative' if x <=3 else 'positive')
     return df
 
 def train_test_spliter(topic_dist_matrix, labels):

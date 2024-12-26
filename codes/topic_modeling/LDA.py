@@ -5,11 +5,11 @@ import gensim
 
 def LDA_training(df, texts_bow, dictionary, id2word,
                  n_topics=5, chunksize=1000, passes=100, iterations=200, 
-                 update_every=1, eval_every=float('inf')):
+                 update_every=1, eval_every=100):
     
     validate_types_of_arguments(df, texts_bow, dictionary, id2word,
                  n_topics=5, chunksize=1000, passes=100, iterations=200, 
-                 update_every=1, eval_every=float('inf'))
+                 update_every=1, eval_every=100)
     
 
     print('--- LDA starting ---')
@@ -22,7 +22,7 @@ def LDA_training(df, texts_bow, dictionary, id2word,
     print('--- LDA finished ---')
 
     # Evaluating the model
-    top_topics = model.top_topics(texts_bow, topn=3)
+    top_topics = model.top_topics(texts_bow, topn=20)
 
     # Calculate and display average topic coherence
     avg_topic_coherence = sum([t[1] for t in top_topics]) / n_topics
@@ -34,7 +34,7 @@ def LDA_training(df, texts_bow, dictionary, id2word,
     return model
 
 
-def display_top_words_for_topics(lda_model, n_topics, n_words=10):
+def display_top_words_for_topics(lda_model, n_topics, n_words=20):
     try:
         # Check if the model and number of topics are valid
         if lda_model is None or n_topics <= 0:
