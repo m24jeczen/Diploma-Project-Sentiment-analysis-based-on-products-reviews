@@ -5,11 +5,19 @@ import streamlit as st
 import sys
 import os
 
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+
+
 # Adding root path to the project
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 os.chdir(project_root)
 sys.path.append(project_root)
-
+os.environ["STREAMLIT_CONFIG_FILE"] = os.path.abspath(
+    os.path.join(project_root, ".streamlit/config.toml")
+)
     
 from codes.loading_and_filtering.parameters import categories
 from codes.loading_and_filtering.filter import filter
@@ -17,7 +25,15 @@ from codes.loading_and_filtering.data_loader import load_products, load_reviews
 
 st.set_page_config(page_title="Amazon products", layout="wide")
 
-st.title("Filter amazon products")
+st.markdown(
+    """
+    <h1 style="color:#F6B17A;">Filter Amazon Products</h1>
+    """, 
+    unsafe_allow_html=True
+)
+
+# st.title("Filter amazon products")
+ 
 
 st.sidebar.header("Choose category and set filters")
 selected_category = st.sidebar.selectbox("Choose category:", categories)

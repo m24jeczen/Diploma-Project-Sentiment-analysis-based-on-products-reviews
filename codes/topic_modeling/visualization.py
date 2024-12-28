@@ -24,7 +24,7 @@ def display_visuals_LDA(model, texts_bow, dictionary):
 
 
 
-def create_review_topic_matrix_stars(df, lda_model, texts_bow, n_topics):
+def create_review_topic_matrix_stars(df, lda_model, texts_bow, n_topics, min_prob=0.0):
 
     # Getting unique ratings in df
     unique_reviews = sorted(df['rating'].unique())
@@ -32,11 +32,10 @@ def create_review_topic_matrix_stars(df, lda_model, texts_bow, n_topics):
     matrix = np.zeros((len(unique_reviews), n_topics))
 
     # From each document, based on LDA model, we get a prop distribution of topics. 
-    topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=0.0) for bow in texts_bow]
+    topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=min_prob) for bow in texts_bow]
 
     for i, review in enumerate(unique_reviews):
         indices = df[df['rating'] == review].index.tolist()
-
         for idx in indices:
             if idx < len(topics_per_document):  
                 topic_probs = topics_per_document[idx]
@@ -67,10 +66,10 @@ def create_review_topic_matrix_stars(df, lda_model, texts_bow, n_topics):
     return matrix
 
 
-def create_review_topic_matrix_sentiment(df_with_sentiment, lda_model, texts_bow, n_topics):
+def create_review_topic_matrix_sentiment(df_with_sentiment, lda_model, texts_bow, n_topics, min_prob=0.0):
     matrix = np.zeros((2, n_topics))
 
-    topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=0.0) for bow in texts_bow]
+    topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=min_prob) for bow in texts_bow]
     sentiments = ['negative', 'positive']
 
     for i, sentiment in enumerate(sentiments):
