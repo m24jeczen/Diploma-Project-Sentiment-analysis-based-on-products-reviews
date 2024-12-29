@@ -12,8 +12,8 @@ class DownloadedModel:
 
 # Later will be list of models updated after every training of bert
 available_models = {}
-roberta_model = DownloadedModel(model_name = "cardiffnlp/twitter-roberta-base-sentiment", local_path = "models/twitter-roberta-sentiment")
-bert_model_name="bert-base-uncased"
+roberta_model = DownloadedModel(model_name = "cardiffnlp/twitter-roberta-base-sentiment", local_path = os.path.join("models","twitter-roberta-sentiment"))
+bert_model=DownloadedModel(model_name = "bert-base-uncased", local_path =  os.path.join("models","bert-base-uncased"))
 
 categories = [
     "All_Beauty",

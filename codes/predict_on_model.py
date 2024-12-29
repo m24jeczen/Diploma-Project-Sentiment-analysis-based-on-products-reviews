@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from nltk.sentiment import SentimentIntensityAnalyzer
 from codes.parameters import device, roberta_model
+from codes. download_model import BertForTask
 from torch.utils.data import DataLoader, Dataset
 import torch, nltk
 import numpy as np
@@ -27,11 +28,48 @@ class TextDataset(Dataset):
         return {key: val.squeeze(0) for key, val in inputs.items()}
     
 
-def predict_on_local_model(data, local_path, batch_size=128):
+def predict_on_tuned_model(data, local_path, batch_size=256):
     try:
         # Initialize the tokenizer and model
         tokenizer = AutoTokenizer.from_pretrained(local_path)
-        model = AutoModelForSequenceClassification.from_pretrained(local_path)
+        model = BertForTask.load_model("classification",5,local_path)
+    except Exception as e:
+        print(f"Error loading the model: {e}")
+        return
+    texts = list(data.text)
+    all_predictions = []
+    model.to(device)
+    model.eval()
+    dataset = TextDataset(
+        texts=texts,
+        tokenizer=tokenizer
+    )
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    with torch.no_grad():
+        for batch in dataloader:
+            # Move input data to the same device as the model
+            input_ids = batch['input_ids'].to(device)
+            attention_mask = batch['attention_mask'].to(device)
+
+            # Forward pass
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+
+            if model.task == "classification":
+                predictions = torch.argmax(outputs, dim=1)  # Get class indices
+            elif model.task == "regression":
+                predictions = outputs.squeeze(-1)  # Flatten for regression
+
+            all_predictions.extend(predictions.cpu().numpy())  # Move predictions to CPU for further processing
+
+    return np.array(all_predictions)
+
+
+# Function to predict on twitter model. There are fixed 3 labels but we care about only positive and negative
+def predict_on_roberta(data, batch_size = 256):
+    try:
+        # Initialize the tokenizer and model
+        tokenizer = AutoTokenizer.from_pretrained(roberta_model.local_path)
+        model = AutoModelForSequenceClassification.from_pretrained(roberta_model.local_path)
     except Exception as e:
         print(f"Error loading the model: {e}")
         return
@@ -54,12 +92,6 @@ def predict_on_local_model(data, local_path, batch_size=128):
 
         predictions.extend(logits.tolist())
 
-    return predictions
-
-
-# Function to predict on twitter model. There are fixed 3 labels which we would not change
-def predict_on_roberta(data):
-    predictions = predict_on_local_model(data, roberta_model.local_path)
     mapped_predictions = [
         1 if logit[2] > logit[0] else 0 
         for logit in predictions
@@ -69,20 +101,19 @@ def predict_on_roberta(data):
 
 # Function to predict starts for data on saved model. Will be changed to accept any saved loccaly model
 def predict_stars(data, model_local_path):
-    logits = predict_on_local_model(data, model_local_path)
+    logits = predict_on_tuned_model(data, model_local_path)
     return np.argmax(logits,axis = 1) +1
 
 # Function to predict sentiment on trained bert model
 def predict_sentiment_bert(data, model_local_path):
-    logits = predict_on_local_model(data, model_local_path)
-    return np.argmax(logits,axis = 1)
+    logits = predict_on_tuned_model(data, model_local_path)
+    return np.argmax(logits, axis = 1)
 
 def predict_on_vader(data):
 
     # Make sure to download the VADER lexicon if not already downloaded
     if not nltk.downloader.Downloader().is_installed('vader_lexicon'):
         nltk.download('vader_lexicon')
-
     sia = SentimentIntensityAnalyzer()
     # Apply sentiment analysis to the dataset
     data['sentiment'] = data['text'].apply(lambda x:1 if sia.polarity_scores(x)['compound']>=0 else 0)
