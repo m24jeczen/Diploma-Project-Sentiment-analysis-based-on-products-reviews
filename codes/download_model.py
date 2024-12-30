@@ -56,15 +56,16 @@ class BertForTask(nn.Module):
         elif self.task == "regression":
             return self.regressor(pooled_output)
         
+        # Function for saving models in local folders
     def save_model(self, path):
-        """Save the model to the specified path."""
         self.bert.save_pretrained(path)
         torch.save(self.state_dict(), os.path.join(path, "model_state.pth"))
 
+        # Function for loading tuned models
     @staticmethod
-    def load_model(task, num_classes, path, dropout_rate=0):
+    def load_model(task, num_classes, path):
         """Load a model from the specified path."""
-        model = BertForTask(task, num_classes, dropout_rate)
+        model = BertForTask(task, num_classes)
         model.bert = BertModel.from_pretrained(path)
         model.load_state_dict(torch.load(os.path.join(path, "model_state.pth")))
         return model
@@ -132,7 +133,7 @@ def evaluate_model(model, dataloader, task, criterion, device):
     
 
 # Training function
-def train_model(dataframe, task = "classification",num_classes=5, max_epochs=3, batch_size=16, lr=2e-5, max_len=128, val_split=0.2, localname = None):
+def train_model(dataframe, task = "classification",num_classes=5, max_epochs=3, batch_size=16, lr=2e-5, max_len=128, val_split=0.2, localname = None, early_stopping = True, patience = 3, dropout_rate = 0):
     tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
     dataset = TextDataset(
         texts=dataframe['text'].tolist(),
@@ -148,10 +149,14 @@ def train_model(dataframe, task = "classification",num_classes=5, max_epochs=3, 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    # Initialize model and assign loss function depend on choosen regression or classification
-    model = BertForTask(task, num_classes=num_classes).to(device)
+    # Initialize model and assign loss function depend on choosen regression or classification approach
+    model = BertForTask(task, num_classes=num_classes, dropout_rate = dropout_rate).to(device)
     criterion = model.criterion
     optimizer = AdamW(model.parameters(), lr=lr)
+
+    best_val_loss = float('inf')
+    patience_counter = 0
+    best_model_state = None
 
     # Training loop
     for epoch in range(max_epochs):
@@ -178,11 +183,38 @@ def train_model(dataframe, task = "classification",num_classes=5, max_epochs=3, 
         val_loss, metric = evaluate_model(model, val_loader, task, criterion, device)
 
         print(f"Epoch {epoch + 1}/{max_epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Val Accuracy: {metric:.4f}")
-        if localname == None:
-            current_time =datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            path = os.path.join("models", "bert_"+task+"_trained_at_"+current_time)
-        else:
-            path = os.path.join("models", localname)
+        
+        if early_stopping:
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                patience_counter = 0
+                best_model_state = model.state_dict()  # Save the current best state
+            else:
+                patience_counter += 1
+                print(f"No improvement for {patience_counter} epochs. Patience: {patience}")
+
+            # Stop training if patience is exceeded
+            if patience_counter >= patience:
+                print("Early stopping triggered.")
+                break
+
+    # Load the best model state into the model
+    if best_model_state:
+        model.load_state_dict(best_model_state)
+    folder = "models"
+    # path for star prediction and (classification and regression approaches)
+    if num_classes == 5:
+        # for star prediction
+        folder = os.path.join(folder, task)
+    else:
+        # for sentiment prediction
+        folder = os.path.join(folder, "sentiment_prediction")
+    
+    if localname == None:
+        current_time =datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        path = os.path.join(folder, "bert_trained_at_"+current_time)
+    else:
+        path = os.path.join(folder, localname)
 
     model.save_model(path)
     tokenizer.save_pretrained(path)

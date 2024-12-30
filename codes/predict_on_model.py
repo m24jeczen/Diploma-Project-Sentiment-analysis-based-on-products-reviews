@@ -29,10 +29,16 @@ class TextDataset(Dataset):
     
 
 def predict_on_tuned_model(data, local_path, batch_size=256):
+    # Checking if choosen model is for star prediction or sentiment analysis
+    if "sentiment_prediction" in local_path:
+        num_classes = 2
+    else:
+        num_classes = 5
+
     try:
         # Initialize the tokenizer and model
         tokenizer = AutoTokenizer.from_pretrained(local_path)
-        model = BertForTask.load_model("classification",5,local_path)
+        model = BertForTask.load_model("classification",num_classes,local_path)
     except Exception as e:
         print(f"Error loading the model: {e}")
         return
@@ -116,6 +122,4 @@ def predict_on_vader(data):
         nltk.download('vader_lexicon')
     sia = SentimentIntensityAnalyzer()
     # Apply sentiment analysis to the dataset
-    data['sentiment'] = data['text'].apply(lambda x:1 if sia.polarity_scores(x)['compound']>=0 else 0)
-
-    return data
+    return data['text'].apply(lambda x:1 if sia.polarity_scores(x)['compound']>=0 else 0)
