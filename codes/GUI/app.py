@@ -30,7 +30,7 @@ with open(css_file_path) as f:
 # App title
 st.markdown(
     """
-    <h1 style="color:#F6B17A; text-align: center;">Amazon Product Analysis</h1>
+    <h1 style="color:#F6B17A; text-align: center; font-size: 35px;">Amazon Product Analysis</h1>
     """,
     unsafe_allow_html=True
 )
@@ -117,7 +117,7 @@ elif nav_option == "NLP Results":
 # Page 3: Model Results
 elif nav_option == "Model Results":
     st.subheader("Model Results")
-    st.write("Here you can display the results of your models, such as predictions or evaluation metrics.")
+    st.write("These are example model evaluation metrics. There can be plots or whatever")
     # Example: Display dummy metrics
     try:
         st.metric("Model Accuracy", "92.5%")
