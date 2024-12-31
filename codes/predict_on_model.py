@@ -35,10 +35,16 @@ def predict_on_tuned_model(data, local_path, batch_size=256):
     else:
         num_classes = 5
 
+    # Checking if model was trained to do regression or classification
+    if "regression" in local_path:
+        task = "regression"
+    else:
+        task = "classification"
+
     try:
         # Initialize the tokenizer and model
         tokenizer = AutoTokenizer.from_pretrained(local_path)
-        model = BertForTask.load_model("classification",num_classes,local_path)
+        model = BertForTask.load_model(task,num_classes,local_path)
     except Exception as e:
         print(f"Error loading the model: {e}")
         return
@@ -60,9 +66,9 @@ def predict_on_tuned_model(data, local_path, batch_size=256):
             # Forward pass
             outputs = model(input_ids=input_ids, attention_mask=attention_mask)
 
-            if model.task == "classification":
+            if task == "classification":
                 predictions = torch.argmax(outputs, dim=1)  # Get class indices
-            elif model.task == "regression":
+            elif task == "regression":
                 predictions = outputs.squeeze(-1)  # Flatten for regression
 
             all_predictions.extend(predictions.cpu().numpy())  # Move predictions to CPU for further processing
@@ -107,13 +113,13 @@ def predict_on_roberta(data, batch_size = 256):
 
 # Function to predict starts for data on saved model. Will be changed to accept any saved loccaly model
 def predict_stars(data, model_local_path):
-    logits = predict_on_tuned_model(data, model_local_path)
-    return np.argmax(logits,axis = 1) +1
+    predictions = predict_on_tuned_model(data, model_local_path)
+    return predictions +1
 
 # Function to predict sentiment on trained bert model
 def predict_sentiment_bert(data, model_local_path):
-    logits = predict_on_tuned_model(data, model_local_path)
-    return np.argmax(logits, axis = 1)
+    predictions = predict_on_tuned_model(data, model_local_path)
+    return predictions
 
 def predict_on_vader(data):
 
