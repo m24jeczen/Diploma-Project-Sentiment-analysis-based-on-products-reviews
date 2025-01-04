@@ -3,6 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+import streamlit as st
 
 
 def display_visuals_LDA(model, texts_bow, dictionary):
@@ -104,6 +105,47 @@ def create_review_topic_matrix_sentiment(df_with_sentiment, lda_model, texts_bow
 
     return matrix
 
+def create_review_topic_matrix_sentiment_for_app(df_with_sentiment, lda_model, texts_bow, n_topics, min_prob=0.0):
+    matrix = np.zeros((2, n_topics))
+
+    topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=min_prob) for bow in texts_bow]
+    sentiments = ['negative', 'positive']
+
+    for i, sentiment in enumerate(sentiments):
+        indices = df_with_sentiment[df_with_sentiment['sentiment'] == sentiment].index.tolist()
+
+        for idx in indices:
+            if idx < len(topics_per_document):  
+                topic_probs = topics_per_document[idx]
+                for topic_id, prob in topic_probs:
+                    # in every cell of matrix, there is a sum of prop
+                    matrix[i, topic_id] += prob
+
+        # # Normalization of rows
+        row_sum = matrix[i, :].sum()
+        if row_sum > 0:
+            matrix[i, :] /= row_sum
+
+    # Normalization by columns
+    # for i in range (n_topics):
+    #     col_sum = matrix[:, i].sum()
+    #     if col_sum > 0:
+    #         matrix[:, i] /= col_sum
+
+    matrix = pd.DataFrame(matrix, index=sentiments, columns=[f"Topic_{i}" for i in range(n_topics)])
+
+    plt.figure(figsize=(20, 6))
+    sns.heatmap(matrix, annot=True, fmt=".5f", cmap="coolwarm", cbar=True)
+    plt.title("Review-Topic Matrix Heatmap")
+    plt.xlabel("Topics")
+    plt.ylabel("Review Scores")
+    plt.show()
+
+    st.pyplot(plt)
+    plt.close()
+
+    return matrix
+
 def generate_topic_rating_matrix(df, n_topics=15):
   
     matrix = np.zeros((5, n_topics))  
@@ -126,3 +168,61 @@ def generate_topic_rating_matrix(df, n_topics=15):
     plt.show()
 
     return matrix_df
+
+
+def create_review_topic_matrix_stars_for_app(df, lda_model, texts_bow, n_topics, min_prob=0.0):
+    """
+    Creates and displays a review-topic matrix as a heatmap.
+
+    Parameters:
+        df (DataFrame): DataFrame containing review data.
+        lda_model: LDA model object.
+        texts_bow: Bag-of-words representation of the texts.
+        n_topics (int): Number of topics.
+        min_prob (float): Minimum probability threshold for topics.
+
+    Returns:
+        matrix (DataFrame): The review-topic matrix.
+    """
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    import streamlit as st
+
+    # Getting unique ratings in df
+    unique_reviews = sorted(df['rating'].unique())
+    matrix = np.zeros((len(unique_reviews), n_topics))
+
+    # From each document, based on LDA model, we get a probability distribution of topics.
+    topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=min_prob) for bow in texts_bow]
+
+    for i, review in enumerate(unique_reviews):
+        indices = df[df['rating'] == review].index.tolist()
+        for idx in indices:
+            if idx < len(topics_per_document):
+                topic_probs = topics_per_document[idx]
+                for topic_id, prob in topic_probs:
+                    # Add probabilities to the matrix
+                    matrix[i, topic_id] += prob
+
+        # Normalize rows
+        row_sum = matrix[i, :].sum()
+        if row_sum > 0:
+            matrix[i, :] /= row_sum
+
+    # Convert matrix to DataFrame
+    matrix = pd.DataFrame(matrix, index=unique_reviews, columns=[f"Topic_{i}" for i in range(n_topics)])
+
+    # Generate heatmap
+    plt.figure(figsize=(20, 6))
+    sns.heatmap(matrix, annot=True, fmt=".5f", cmap="coolwarm", cbar=True)
+    plt.title("Review-Topic Matrix Heatmap")
+    plt.xlabel("Topics")
+    plt.ylabel("Ratings")
+
+    # Use Streamlit to display the heatmap
+    st.pyplot(plt)
+    plt.close()
+
+    return matrix
