@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from nltk.sentiment import SentimentIntensityAnalyzer
-from codes.parameters import device, roberta_model
+from codes.loading_and_filtering.parameters import device, roberta_model
 from torch.utils.data import DataLoader, Dataset
 import torch, nltk
 import numpy as np

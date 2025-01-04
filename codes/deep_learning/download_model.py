@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from codes.parameters import device
+from codes.loading_and_filtering.parameters import device
 from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
-from codes.parameters import roberta_model, bert_model_name, available_models
+from codes.loading_and_filtering.parameters import roberta_model, bert_model_name, available_models
 from sklearn.model_selection import train_test_split
 from datasets import Dataset
 import torch

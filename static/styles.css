@@ -1,0 +1,53 @@
+
+
+/* Navigation bar styling */
+.stRadio > div {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px 0;
+    background-color: #161A2D; /* Darker background for better contrast */
+    border-radius: 8px;
+    margin-bottom: 0px; /* Ensure no extra margins below */
+}
+
+/* Styling for navigation buttons */
+.stRadio > div label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #E2E8F0; /* Light text color to match theme.textColor */
+    padding: 12px 25px;
+    border: 2px solid #424769; /* Darker blue border to match theme.secondaryBackgroundColor */
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #424769; /* Darker blue background to match theme.secondaryBackgroundColor */
+}
+
+/* Change color on hover */
+.stRadio > div label:hover {
+    background-color: #F6B17A; /* Highlight color to match theme.primaryColor */
+    color: #1C2138; /* Dark text color for contrast */
+    border-color: #F6B17A; /* Border color on hover to match theme.primaryColor */
+}
+
+
+
+/* Highlight selected button */
+.stRadio > div label[data-selected="true"] {
+    background-color: #0e7536; /* Highlight color to match theme.primaryColor */
+    color: #1C2138; /* Dark text color for contrast */
+    border-color: #F6B17A; /* Border color to match theme.primaryColor */
+}
+
+/* Remove unwanted lines or borders */
+.main > div { 
+    border-top: none !important; /* Remove top border above nav bar */
+    border-bottom: none !important; /* Remove bottom border below nav bar */
+    box-shadow: none !important; /* Eliminate shadows if present */
+}
+
+/* Remove other horizontal lines (if any are rendered) */
+hr {
+    display: none; /* Hides all horizontal rules */
+}
