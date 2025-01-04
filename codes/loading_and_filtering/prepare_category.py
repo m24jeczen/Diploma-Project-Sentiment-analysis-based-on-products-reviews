@@ -26,6 +26,8 @@ def download_and_save_csv(category):
         for line in gz_file:
             review = json.loads(line)
             values = [review.get(column) for column in selected_columns]
+            #Fix rating into int
+            values[0] = int(values[0])
             review_data.append(values)
 
     # Creating data frame in order to aggregate data and save them in csv file
