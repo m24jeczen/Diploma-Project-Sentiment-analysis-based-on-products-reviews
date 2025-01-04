@@ -133,7 +133,8 @@ def evaluate_model(model, dataloader, task, criterion, device):
     
 
 # Training function
-def train_model(dataframe, task = "classification",num_classes=5, max_epochs=3, batch_size=16, lr=2e-5, max_len=128, val_split=0.2, localname = None, early_stopping = True, patience = 3, dropout_rate = 0):
+def train_model(dataframe, task = "classification",target="rating" ,num_classes=5, max_epochs=3, batch_size=16, lr=2e-5, max_len=128, val_split=0.2, localname = None, early_stopping = True, patience = 3, dropout_rate = 0):
+    dataframe["label"] = dataframe[target]
     tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
     dataset = TextDataset(
         texts=dataframe['text'].tolist(),
@@ -219,20 +220,6 @@ def train_model(dataframe, task = "classification",num_classes=5, max_epochs=3, 
     model.save_model(path)
     tokenizer.save_pretrained(path)
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Function depends on added label tune to predict it and save it locally(genereally only for stars and sentiment 0 or 1)
 def download_and_tune_bert(model_local_path, data, label = "rating"):

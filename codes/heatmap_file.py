@@ -14,3 +14,4 @@ def heatmap(df,column1,column2):
     plt.xlabel(column2)
     plt.ylabel(column1)
     plt.show()
+    
