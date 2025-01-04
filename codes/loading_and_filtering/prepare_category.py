@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from io import BytesIO
 import json
-from codes.parameters import target_directory, categories
+from codes.loading_and_filtering.parameters import target_directory, categories
 from collections import defaultdict
 
 def download_and_save_csv(category):
