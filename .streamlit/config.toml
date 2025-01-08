@@ -1,7 +1,7 @@
 [theme]
-primaryColor = "#F6B17A"         # Granatowy - główny kolor
-backgroundColor = "#1C2138"      # Ciemniejszy granatowy - tło główne
-secondaryBackgroundColor = "#424769" # Ciemnoszary niebieskawy - kolor paneli bocznych
-textColor = "#E2E8F0"            # Jasnoszary - kolor tekstu (aby był dobrze widoczny na ciemnym tle)
-font = "sans serif"              # Czcionka (np. 'serif', 'sans serif', 'monospace')
+primaryColor = "#F6B17A"         
+backgroundColor = "#1C2138"     
+secondaryBackgroundColor = "#424769" 
+textColor = "#E2E8F0"            
+font = "sans serif"              
 
