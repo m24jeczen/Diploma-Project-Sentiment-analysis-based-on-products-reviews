@@ -2,55 +2,69 @@ import pandas as pd
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import streamlit as st  
+from io import BytesIO
+
+import streamlit as st
+from io import BytesIO
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+def create_topic_word_menu(lda_model, n_topics):
+    topic_word_menu = {}
+    for topic_id in range(n_topics):
+        words_probs = lda_model.show_topic(topic_id, topn=20)
+        topic_word_menu[topic_id] = [(word, prob) for word, prob in words_probs]
+    return topic_word_menu
+
+def display_topic_words(selected_topic, topic_word_menu):
+    if selected_topic in topic_word_menu:
+        st.write(f"### Top Words for Topic {selected_topic}")
+        top_words = pd.DataFrame(topic_word_menu[selected_topic], columns=["Word", "Probability"])
+        st.dataframe(top_words, use_container_width=True)
+    else:
+        st.warning("Selected topic not found.")
+
 
 def create_wordcloud_from_df(df):
     text = " ".join(df['text'].dropna().astype(str))
-    
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
-    
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis("off")
     plt.show()
 
+
 def create_wordcloud_from_df_for_app(df):
     text = " ".join(df['text'].dropna().astype(str))
     
     wordcloud = WordCloud(
-        width=800,  # Width of the image
-        height=400,  # Height of the image
-        background_color="#1C2138",  # Dark background
-        colormap="Oranges",  # Color palette matching the primary color
-        contour_color="#F6B17A",  # Outline color
-        contour_width=0,  # Outline width
-        margin=0,  # Remove margins around the word cloud
-        max_words=200,  # Limit the number of words (adjust as needed)
-        prefer_horizontal=1.0,  # Force words to be horizontal (optional)
-        mode="RGB",  # Color mode
+        width=800,  
+        height=400,  
+        background_color="#1C2138",  
+        colormap="Oranges",  
+        contour_color="#F6B17A",  
+        contour_width=0,  
+        margin=0,  
+        max_words=200, 
+        prefer_horizontal=1.0,  
+        mode="RGB", 
     ).generate(text)
     
-    plt.figure(figsize=(8, 4))  # Adjusted figure size
+    plt.figure(figsize=(8, 4))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis("off")
     
-    # Ensure no additional space around the image
-    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+    # its done this way so that the streamlit can display it
+    img_stream = BytesIO()
+    wordcloud.to_image().save(img_stream, format="PNG")
+    img_stream.seek(0)  
     
-    # Streamlit-specific display
-    st.pyplot(plt, bbox_inches='tight', pad_inches=0)
+    return img_stream
+
+
 
 def display_top_words_for_topics(lda_model, n_topics, n_words=20):
-    """
-    Generate a string of top words for each topic from the LDA model.
-
-    Parameters:
-        lda_model: The trained LDA model.
-        n_topics (int): Number of topics.
-        n_words (int): Number of words to display per topic.
-
-    Returns:
-        str: Formatted string of top words for each topic.
-    """
     try:
         if lda_model is None or n_topics <= 0:
             raise ValueError("Invalid LDA model or number of topics provided.")
@@ -69,37 +83,22 @@ def display_top_words_for_topics(lda_model, n_topics, n_words=20):
         return f"An error occurred: {e}"
 
 def display_top_words_for_topics2(lda_model, n_topics, n_words=20):
-    """
-    Generate a DataFrame with the top words for each topic from the LDA model.
-
-    Parameters:
-        lda_model: The trained LDA model.
-        n_topics (int): Number of topics.
-        n_words (int): Number of words to display per topic.
-
-    Returns:
-        pd.DataFrame: DataFrame containing topics and corresponding words.
-    """
     try:
         if lda_model is None or n_topics <= 0:
             raise ValueError("Invalid LDA model or number of topics provided.")
 
-        # List to store topic ids and words
         topics_data = []
         
         for topic_id in range(n_topics):
             try:
-                # Get top words for each topic
                 top_words = lda_model.show_topic(topic_id, topn=n_words)
                 words = [word for word, _ in top_words]
                 topics_data.append([f"Topic {topic_id}", ', '.join(words)])
             except Exception as e:
                 topics_data.append([f"Topic {topic_id}", f"Error retrieving words ({e})"])
 
-        # Create a DataFrame
         df_topics = pd.DataFrame(topics_data, columns=["Topic", "Words"])
 
-        # Return the DataFrame
         return df_topics
     except Exception as e:
         return f"An error occurred: {e}"

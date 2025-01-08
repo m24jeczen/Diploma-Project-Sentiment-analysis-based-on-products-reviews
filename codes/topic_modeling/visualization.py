@@ -4,15 +4,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
+from io import BytesIO
 
 
 def display_visuals_LDA(model, texts_bow, dictionary):
     try:
-        # Check if the inputs are valid
         if model is None or not texts_bow or dictionary is None:
             raise ValueError("Invalid inputs provided to display_visuals_LDA. Check the model, texts_bow, and dictionary.")
 
-        # Prepare the LDA visualization
         LDAvis_prepared = pyLDAvis.gensim.prepare(model, texts_bow, dictionary)
         return LDAvis_prepared
     except ValueError as ve:
@@ -27,12 +26,9 @@ def display_visuals_LDA(model, texts_bow, dictionary):
 
 def create_review_topic_matrix_stars(df, lda_model, texts_bow, n_topics, min_prob=0.0):
 
-    # Getting unique ratings in df
     unique_reviews = sorted(df['rating'].unique())
-    
     matrix = np.zeros((len(unique_reviews), n_topics))
 
-    # From each document, based on LDA model, we get a prop distribution of topics. 
     topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=min_prob) for bow in texts_bow]
 
     for i, review in enumerate(unique_reviews):
@@ -171,30 +167,16 @@ def generate_topic_rating_matrix(df, n_topics=15):
 
 
 def create_review_topic_matrix_stars_for_app(df, lda_model, texts_bow, n_topics, min_prob=0.0):
-    """
-    Creates and displays a review-topic matrix as a heatmap.
-
-    Parameters:
-        df (DataFrame): DataFrame containing review data.
-        lda_model: LDA model object.
-        texts_bow: Bag-of-words representation of the texts.
-        n_topics (int): Number of topics.
-        min_prob (float): Minimum probability threshold for topics.
-
-    Returns:
-        matrix (DataFrame): The review-topic matrix.
-    """
+    
     import seaborn as sns
     import matplotlib.pyplot as plt
     import pandas as pd
     import numpy as np
     import streamlit as st
 
-    # Getting unique ratings in df
     unique_reviews = sorted(df['rating'].unique())
     matrix = np.zeros((len(unique_reviews), n_topics))
 
-    # From each document, based on LDA model, we get a probability distribution of topics.
     topics_per_document = [lda_model.get_document_topics(bow, minimum_probability=min_prob) for bow in texts_bow]
 
     for i, review in enumerate(unique_reviews):
@@ -203,7 +185,6 @@ def create_review_topic_matrix_stars_for_app(df, lda_model, texts_bow, n_topics,
             if idx < len(topics_per_document):
                 topic_probs = topics_per_document[idx]
                 for topic_id, prob in topic_probs:
-                    # Add probabilities to the matrix
                     matrix[i, topic_id] += prob
 
         # Normalize rows
@@ -211,18 +192,17 @@ def create_review_topic_matrix_stars_for_app(df, lda_model, texts_bow, n_topics,
         if row_sum > 0:
             matrix[i, :] /= row_sum
 
-    # Convert matrix to DataFrame
     matrix = pd.DataFrame(matrix, index=unique_reviews, columns=[f"Topic_{i}" for i in range(n_topics)])
 
-    # Generate heatmap
     plt.figure(figsize=(20, 6))
     sns.heatmap(matrix, annot=True, fmt=".5f", cmap="coolwarm", cbar=True)
     plt.title("Review-Topic Matrix Heatmap")
     plt.xlabel("Topics")
     plt.ylabel("Ratings")
 
-    # Use Streamlit to display the heatmap
-    st.pyplot(plt)
+    img_stream = BytesIO()
+    plt.savefig(img_stream, format="png", bbox_inches="tight")
+    img_stream.seek(0)  
     plt.close()
 
-    return matrix
+    return img_stream
