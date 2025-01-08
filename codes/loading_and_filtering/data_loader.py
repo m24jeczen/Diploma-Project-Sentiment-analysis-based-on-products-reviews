@@ -5,10 +5,9 @@ from codes.loading_and_filtering.prepare_category import download_and_save_csv
     
 # Functions to load datasets
 def load_store_data(category):
-    review_path, meta_path = os.path.join(target_directory,category+".jsonl"), os.path.join(target_directory,"meta_"+category+".jsonl")
-    if not os.path.exists(review_path) or not os.path.exists(meta_path):
-        print(f"Data {category} is not available locally. Downloading neccesary files.")
-        download_and_save_csv(category)
+    if category not in categories:
+        print(f"Category {category} does not exist in available categories.")
+        return
 
     store_file= os.path.join(target_directory,"store_"+category+".txt")
     if not os.path.exists(store_file):

@@ -1,8 +1,5 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, BertModel, BertTokenizer
-from codes.loading_and_filtering.parameters import device
-from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
-from codes.loading_and_filtering.parameters import roberta_model, bert_model
-from sklearn.model_selection import train_test_split
+from codes.loading_and_filtering.parameters import device, roberta_model, bert_model
 from datasets import Dataset
 import torch, os
 from datetime import datetime
@@ -11,7 +8,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from transformers import BertTokenizer, BertModel
 from torch.optim import AdamW
-from codes.loading_and_filtering.parameters import bert_model, device
 
 def download_and_save_hugging_face_models():
     try:
@@ -133,7 +129,7 @@ def evaluate_model(model, dataloader, task, criterion, device):
     
 
 # Training function
-def train_model(dataframe, task = "classification",target="rating" ,num_classes=5, max_epochs=3, batch_size=16, lr=2e-5, max_len=128, val_split=0.2, localname = None, early_stopping = True, patience = 3, dropout_rate = 0):
+def train_model(dataframe, task = "classification", target="rating",num_classes=5, max_epochs=3, batch_size=16, lr=2e-5, max_len=128, val_split=0.2, localname = None, early_stopping = True, patience = 3, dropout_rate = 0):
     dataframe["label"] = dataframe[target]
     tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
     dataset = TextDataset(
@@ -221,80 +217,3 @@ def train_model(dataframe, task = "classification",target="rating" ,num_classes=
     tokenizer.save_pretrained(path)
         
 
-# Function depends on added label tune to predict it and save it locally(genereally only for stars and sentiment 0 or 1)
-def download_and_tune_bert(model_local_path, data, label = "rating"):
-    # Handling errors of wrong input data
-    try:
-         data=data[data["text"].str.split().str.len() >= 1]
-         texts = list(data.text)
-    except:
-         return "Invalid text data"
-    try:
-        if label == "rating":
-            number_of_labels = 5
-            labels = [int(x)-1 for x in data.rating]
-        else:
-             labels = data[label]
-             number_of_labels = 2
-    except:
-         return "Invalid data"
-
-    # Train val splitting
-    train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=0.2, random_state=42)
-
-    tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
-
-    # Tokenizing texts
-    train_encodings = tokenizer(train_texts, padding="max_length", truncation=True, max_length=128)
-    val_encodings = tokenizer(val_texts, padding="max_length", truncation=True, max_length=128)
-
-    def prepare_dataset(encodings, labels):
-        return Dataset.from_dict({
-            'input_ids': encodings['input_ids'],
-            'attention_mask': encodings['attention_mask'],
-            'labels': labels
-        })
-    # Needed in case of entering ratings out of range 1-5
-    try:
-        train_dataset = prepare_dataset(train_encodings, train_labels)
-        val_dataset = prepare_dataset(val_encodings, val_labels)
-
-        model = BertForSequenceClassification.from_pretrained(bert_model.local_path, num_labels=number_of_labels)
-        model.to(device) 
-
-
-        def compute_metrics(eval_pred):
-            logits, labels = eval_pred
-            predictions = torch.argmax(torch.tensor(logits), dim=1).to(device)
-            accuracy = (predictions == torch.tensor(labels).to(device)).float().mean().item()
-            return {"accuracy": accuracy}
-
-        training_args = TrainingArguments(
-            output_dir="../results",
-            evaluation_strategy="epoch",
-            save_strategy="epoch",
-            learning_rate=2e-5,
-            per_device_train_batch_size=16,
-            num_train_epochs=1,
-            weight_decay=0.01,
-            logging_dir="../logs",
-            logging_steps=10,
-            load_best_model_at_end=True
-        )
-
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=val_dataset,
-            tokenizer=tokenizer,
-            compute_metrics=compute_metrics
-        )
-        trainer.train()
-        results = trainer.evaluate()
-
-        trainer.save_model(model_local_path)
-
-    except:
-        return "Wrong parameters or input data"
-        

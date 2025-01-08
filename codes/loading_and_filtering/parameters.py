@@ -9,9 +9,6 @@ class DownloadedModel:
     def __init__(self, model_name, local_path):
         self.model_name = model_name
         self.local_path = local_path
-
-# Placeholder for final implementation of loading trained models
-available_models = {}
 roberta_model = DownloadedModel(model_name = "cardiffnlp/twitter-roberta-base-sentiment", local_path = os.path.join("models","twitter-roberta-sentiment"))
 bert_model=DownloadedModel(model_name = "bert-base-uncased", local_path =  os.path.join("models","bert-base-uncased"))
 
