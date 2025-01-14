@@ -2,8 +2,44 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import streamlit as st
-from io import BytesIO
+from sklearn.metrics import mean_absolute_error, accuracy_score, f1_score
+
+
+def calculate_metrics(df, label_col='label', prediction_col='prediction'):
+    if label_col not in df.columns or prediction_col not in df.columns:
+        raise ValueError(f"Tabel must contains columns '{label_col}' and '{prediction_col}'.")
+
+    mae = mean_absolute_error(df[label_col], df[prediction_col])
+    avg_accuracy = accuracy_score(df[label_col], df[prediction_col])
+
+    unique_labels = df[label_col].unique()
+    metrics_per_label = []
+
+    for label in unique_labels:
+        true_positive = ((df[label_col] == label) & (df[prediction_col] == label)).sum()
+        total_for_label = (df[label_col] == label).sum()
+        label_accuracy = true_positive / total_for_label 
+        label_f1 = f1_score(df[label_col], df[prediction_col], labels=[label], average='macro')
+        mae_for_label = mean_absolute_error(
+            df[df[label_col] == label][label_col],
+            df[df[label_col] == label][prediction_col]
+        )
+
+        metrics_per_label.append({
+            'label': label,
+            'accuracy': label_accuracy,
+            'f1_score': label_f1,
+            'mae': mae_for_label
+        })
+
+    metrics_df = pd.DataFrame(metrics_per_label)
+
+    return {
+        'MAE': mae,
+        'Average Accuracy': avg_accuracy,
+        'Metrics Per Label': metrics_df
+    }
+
 
 def heatmap(df, column1, column2):
     # Creating a cross-tabulation for heatmap
@@ -25,21 +61,9 @@ def heatmap(df, column1, column2):
     # Return the image stream for Streamlit
     return img_stream
 
-def average_rating_per_month(df):
-    df
-    plt.figure(figsize=(10, 6))
-    plt.plot(df["miesiac"], df["score"], marker="o", linestyle="-", color="b", label="Averaged score thru months")
-    plt.title("Averaged score thru months")
-    plt.xlabel("Time")
-    plt.ylabel("Averaged Score")
-    plt.grid(True)
-    plt.legend()
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
 
-
-def plot_number_of_words_percentages(numbers, limit):
+def plot_number_of_words_percentages(data, limit=500):
+    numbers = data["text"].str.split().str.len()
     sorted_numbers = np.sort(numbers)
     cumulative_probabilities = np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
 
@@ -61,7 +85,7 @@ def plot_number_of_words_percentages(numbers, limit):
     plt.show()
 
 
-def plot_monthly_avg(data,pointers = 20):
+def plot_monthly_avg(data, label = "rating",pointers = 20):
     data['date'] = pd.to_datetime(data['timestamp'])
     # Usuń wiersze z nieprawidłowymi datami
     data = data.dropna(subset=['date'])
@@ -73,7 +97,7 @@ def plot_monthly_avg(data,pointers = 20):
     data = data.sort_values(by='date')
 
     # Oblicz skumulowaną średnią
-    data['cumulative_average'] = data['rating'].expanding().mean()
+    data['cumulative_average'] = data[label].expanding().mean()
     markers =  np.linspace(0, len(data) - 1, pointers, dtype=int)
     plot_data = data.iloc[markers]
 
@@ -87,8 +111,8 @@ def plot_monthly_avg(data,pointers = 20):
     plt.tight_layout()
     plt.show()
 
-def distribiution_of_rating(df):
-    rating_counts = df['rating'].value_counts(normalize=True) * 100  # Normalize=True gives proportions
+def distribiution_of_rating(df, label = "rating"):
+    rating_counts = df[label].value_counts(normalize=True) * 100  # Normalize=True gives proportions
     rating_counts = rating_counts.sort_index()  # Ensure ratings are sorted from 1 to 5
 
     # Bar positions and width
