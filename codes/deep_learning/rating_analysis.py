@@ -2,6 +2,44 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_absolute_error, accuracy_score, f1_score
+
+
+def calculate_metrics(df, label_col='label', prediction_col='prediction'):
+    if label_col not in df.columns or prediction_col not in df.columns:
+        raise ValueError(f"Tabel must contains columns '{label_col}' and '{prediction_col}'.")
+
+    mae = mean_absolute_error(df[label_col], df[prediction_col])
+    avg_accuracy = accuracy_score(df[label_col], df[prediction_col])
+
+    unique_labels = df[label_col].unique()
+    metrics_per_label = []
+
+    for label in unique_labels:
+        true_positive = ((df[label_col] == label) & (df[prediction_col] == label)).sum()
+        total_for_label = (df[label_col] == label).sum()
+        label_accuracy = true_positive / total_for_label 
+        label_f1 = f1_score(df[label_col], df[prediction_col], labels=[label], average='macro')
+        mae_for_label = mean_absolute_error(
+            df[df[label_col] == label][label_col],
+            df[df[label_col] == label][prediction_col]
+        )
+
+        metrics_per_label.append({
+            'label': label,
+            'accuracy': label_accuracy,
+            'f1_score': label_f1,
+            'mae': mae_for_label
+        })
+
+    metrics_df = pd.DataFrame(metrics_per_label)
+
+    return {
+        'MAE': mae,
+        'Average Accuracy': avg_accuracy,
+        'Metrics Per Label': metrics_df
+    }
+
 
 def heatmap(df,column1,column2):
 
