@@ -2,17 +2,28 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import streamlit as st
+from io import BytesIO
 
-def heatmap(df,column1,column2):
-
+def heatmap(df, column1, column2):
+    # Creating a cross-tabulation for heatmap
     cross_tab = pd.crosstab(df[column1], df[column2])
 
+    # Creating the heatmap with Matplotlib and Seaborn
     plt.figure(figsize=(8, 6))
     sns.heatmap(cross_tab, annot=True, cmap="coolwarm", fmt="d")
-    plt.title("Heatmap of correlation beetwen true values and prediction")
+    plt.title("Heatmap of Correlation Between True Values and Predictions")
     plt.xlabel(column2)
     plt.ylabel(column1)
-    plt.show()
+
+    # Save the heatmap to a BytesIO stream for Streamlit compatibility
+    img_stream = BytesIO()
+    plt.savefig(img_stream, format="png", bbox_inches="tight")
+    img_stream.seek(0)  # Reset the stream to the beginning for reading
+    plt.close()
+
+    # Return the image stream for Streamlit
+    return img_stream
 
 def average_rating_per_month(df):
     df

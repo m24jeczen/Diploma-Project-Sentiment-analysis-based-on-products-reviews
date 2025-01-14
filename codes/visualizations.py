@@ -10,6 +10,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+
 def create_topic_word_menu(lda_model, n_topics):
     topic_word_menu = {}
     for topic_id in range(n_topics):
@@ -62,7 +65,57 @@ def create_wordcloud_from_df_for_app(df):
     
     return img_stream
 
+def create_tfidf_wordcloud(df, rating_column='rating', text_column='text'):
+    # Ensure there is data in the dataframe
+    if df.empty:
+        return {}
 
+    # Collect all text to identify common words across all ratings
+    all_text_data = df[text_column].dropna().astype(str).tolist()
+    global_tfidf = TfidfVectorizer(stop_words='english', max_features=200)
+    global_tfidf_matrix = global_tfidf.fit_transform(all_text_data)
+    feature_names = global_tfidf.get_feature_names_out()
+    global_word_scores = global_tfidf_matrix.sum(axis=0).A1
+    common_words = {word for word, score in zip(feature_names, global_word_scores) if score > 0}
+
+    unique_ratings = sorted(df[rating_column].unique())
+    word_clouds = {}
+
+    for rating in unique_ratings:
+        rating_df = df[df[rating_column] == rating]
+        text_data = rating_df[text_column].dropna().astype(str).tolist()
+        
+        # Skip if no valid data
+        if not text_data:
+            continue
+
+        # Create a new vectorizer for each rating to ensure consistency
+        tfidf = TfidfVectorizer(stop_words='english', max_features=200)
+        rating_tfidf_matrix = tfidf.fit_transform(text_data)
+        feature_names = tfidf.get_feature_names_out()
+        scores = rating_tfidf_matrix.sum(axis=0).A1
+
+        # Remove common words across all ratings
+        word_scores = {word: scores[idx] for idx, word in enumerate(feature_names) if word not in common_words and scores[idx] > 0}
+
+        # Generate the word cloud
+        wordcloud = WordCloud(
+            width=800,  
+            height=400,  
+            background_color="#1C2138",  
+            colormap="Oranges",  
+            contour_color="#F6B17A",  
+            max_words=200,  
+        ).generate_from_frequencies(word_scores)
+
+        # Save the word cloud to a bytes stream
+        img_stream = BytesIO()
+        wordcloud.to_image().save(img_stream, format="PNG")
+        img_stream.seek(0)
+
+        word_clouds[rating] = img_stream
+
+    return word_clouds
 
 def display_top_words_for_topics(lda_model, n_topics, n_words=20):
     try:

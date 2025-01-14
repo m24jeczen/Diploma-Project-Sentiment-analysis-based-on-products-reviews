@@ -217,3 +217,15 @@ def train_model(dataframe, task = "classification", target="rating",num_classes=
     tokenizer.save_pretrained(path)
         
 
+
+def get_available_models():
+    models_dir = "./models"
+    available_models = {}
+    for root, dirs, files in os.walk(models_dir):
+        if "config.json" in files:
+            relative_path = os.path.relpath(root, models_dir)
+            model_name = os.path.basename(root)
+            available_models[model_name] = os.path.join(models_dir, relative_path)
+    return available_models
+
+
