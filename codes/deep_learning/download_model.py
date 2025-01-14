@@ -50,7 +50,8 @@ class BertForTask(nn.Module):
         if self.task == "classification":
             return self.classifier(pooled_output)
         elif self.task == "regression":
-            return self.regressor(pooled_output)
+            logits = self.regressor(pooled_output)
+            return torch.clamp(logits,min = 1, max=5)
         
         # Function for saving models in local folders
     def save_model(self, path):
@@ -104,9 +105,6 @@ def evaluate_model(model, dataloader, task, criterion, device):
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
             labels = batch['label'].to(device)
-            if task == "regression":
-                ratings = torch.round(labels * 4 + 1)
-
             with torch.amp.autocast('cuda'):
                 outputs = model(input_ids=input_ids, attention_mask=attention_mask)
             
@@ -118,8 +116,8 @@ def evaluate_model(model, dataloader, task, criterion, device):
             elif task == "regression":
                 outputs = outputs.squeeze(-1)
                 loss = criterion(outputs, labels)
-                predictions = torch.round(outputs * 4 + 1)  # Apply scaling and rounding
-                correct += (predictions == ratings).sum().item()
+                predictions = torch.round(outputs)  # Apply scaling and rounding
+                correct += (predictions == labels).sum().item()
                 total += labels.size(0)
 
             total_loss += loss.item()

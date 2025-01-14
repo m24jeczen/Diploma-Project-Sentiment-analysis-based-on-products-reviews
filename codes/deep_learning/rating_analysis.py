@@ -28,7 +28,8 @@ def average_rating_per_month(df):
     plt.show()
 
 
-def plot_number_of_words_percentages(numbers, limit):
+def plot_number_of_words_percentages(data, limit = 500):
+    numbers = data["text"].str.split().str.len()
     sorted_numbers = np.sort(numbers)
     cumulative_probabilities = np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
 
@@ -50,7 +51,7 @@ def plot_number_of_words_percentages(numbers, limit):
     plt.show()
 
 
-def plot_monthly_avg(data,pointers = 20):
+def plot_monthly_avg(data, label = "rating",pointers = 20):
     data['date'] = pd.to_datetime(data['timestamp'])
     # Usuń wiersze z nieprawidłowymi datami
     data = data.dropna(subset=['date'])
@@ -62,7 +63,7 @@ def plot_monthly_avg(data,pointers = 20):
     data = data.sort_values(by='date')
 
     # Oblicz skumulowaną średnią
-    data['cumulative_average'] = data['rating'].expanding().mean()
+    data['cumulative_average'] = data[label].expanding().mean()
     markers =  np.linspace(0, len(data) - 1, pointers, dtype=int)
     plot_data = data.iloc[markers]
 
@@ -76,8 +77,8 @@ def plot_monthly_avg(data,pointers = 20):
     plt.tight_layout()
     plt.show()
 
-def distribiution_of_rating(df):
-    rating_counts = df['rating'].value_counts(normalize=True) * 100  # Normalize=True gives proportions
+def distribiution_of_rating(df, label = "rating"):
+    rating_counts = df[label].value_counts(normalize=True) * 100  # Normalize=True gives proportions
     rating_counts = rating_counts.sort_index()  # Ensure ratings are sorted from 1 to 5
 
     # Bar positions and width
