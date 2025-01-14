@@ -14,21 +14,8 @@ def heatmap(df,column1,column2):
     plt.ylabel(column1)
     plt.show()
 
-def average_rating_per_month(df):
-    df
-    plt.figure(figsize=(10, 6))
-    plt.plot(df["miesiac"], df["score"], marker="o", linestyle="-", color="b", label="Averaged score thru months")
-    plt.title("Averaged score thru months")
-    plt.xlabel("Time")
-    plt.ylabel("Averaged Score")
-    plt.grid(True)
-    plt.legend()
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
 
-
-def plot_number_of_words_percentages(data, limit = 500):
+def plot_number_of_words_percentages(data, limit=500):
     numbers = data["text"].str.split().str.len()
     sorted_numbers = np.sort(numbers)
     cumulative_probabilities = np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
