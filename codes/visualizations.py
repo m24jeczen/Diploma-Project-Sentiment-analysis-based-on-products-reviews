@@ -72,7 +72,7 @@ def create_tfidf_wordcloud(df, rating_column='rating', text_column='text'):
 
     # Collect all text to identify common words across all ratings
     all_text_data = df[text_column].dropna().astype(str).tolist()
-    global_tfidf = TfidfVectorizer(stop_words='english', max_features=200)
+    global_tfidf = TfidfVectorizer(stop_words='english', max_features=300)
     global_tfidf_matrix = global_tfidf.fit_transform(all_text_data)
     feature_names = global_tfidf.get_feature_names_out()
     global_word_scores = global_tfidf_matrix.sum(axis=0).A1
@@ -90,7 +90,7 @@ def create_tfidf_wordcloud(df, rating_column='rating', text_column='text'):
             continue
 
         # Create a new vectorizer for each rating to ensure consistency
-        tfidf = TfidfVectorizer(stop_words='english', max_features=200)
+        tfidf = TfidfVectorizer(stop_words='english', max_features=300)
         rating_tfidf_matrix = tfidf.fit_transform(text_data)
         feature_names = tfidf.get_feature_names_out()
         scores = rating_tfidf_matrix.sum(axis=0).A1
@@ -116,6 +116,9 @@ def create_tfidf_wordcloud(df, rating_column='rating', text_column='text'):
         word_clouds[rating] = img_stream
 
     return word_clouds
+
+
+
 
 def display_top_words_for_topics(lda_model, n_topics, n_words=20):
     try:

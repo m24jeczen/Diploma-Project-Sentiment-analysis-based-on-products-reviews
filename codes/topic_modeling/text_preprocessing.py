@@ -6,6 +6,8 @@ from gensim.models import Phrases
 from gensim.corpora import Dictionary
 import spacy
 nlp = spacy.load("en_core_web_sm")
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 def remove_numbers(texts):
     try:
@@ -44,7 +46,7 @@ def remove_verbs(texts):
 
 
 def preprocess_text(df, no_below=3, no_above=0.8, with_certain_words_removal=False, 
-                    words_to_remove=None):
+                    words_to_remove=None, groupby_column='rating'):
     # no_below : Keep tokens which are contained in at least `no_below` documents
     # no_above : Keep tokens which are contained in no more than `no_above` documents
     #        (fraction of total corpus size, not an absolute number)
@@ -121,13 +123,39 @@ def preprocess_text(df, no_below=3, no_above=0.8, with_certain_words_removal=Fal
             raise
 
         try:
+        # Apply TF-IDF for global word filtering
+            all_text_data = [' '.join(text) for text in texts]
+            global_tfidf = TfidfVectorizer(stop_words='english', max_features=500)
+            global_tfidf_matrix = global_tfidf.fit_transform(all_text_data)
+            feature_names = global_tfidf.get_feature_names_out()
+            global_word_scores = global_tfidf_matrix.sum(axis=0).A1
+            common_words = {word for word, score in zip(feature_names, global_word_scores) if score > 0}
+            texts = [[word for word in text if word not in common_words] for text in texts]
+            print('--- tfidf global done ---')
+
+        except Exception as e:
+            print(f"Exception during global word filtering: {e}")    
+        try:
             dictionary = Dictionary(texts)
             dictionary.filter_extremes(no_below, no_above)
             print('--- Common and rare words removed ---')
         except Exception as e:
             print(f"Exception during removing common and rare words: {e}")
  
+        try:
+            if groupby_column:
+                grouped_texts = []
+                for _, group in df.groupby(groupby_column):
+                    group_texts = group['text'].astype(str).tolist()
+                    group_texts = [' '.join(tokenizer.tokenize(text.lower())) for text in group_texts]
+                    grouped_texts.extend(group_texts)
 
+                global_tfidf_matrix = global_tfidf.fit_transform(grouped_texts)
+                print('--- tfidf grouped done ---')
+
+        except Exception as e:
+            print(f"Exception during groupby column: {e}")
+        
         try:
             # Creating bag of words
             texts_bow = [dictionary.doc2bow(text) for text in texts]

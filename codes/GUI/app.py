@@ -81,25 +81,36 @@ if st.session_state.page == "Menu":
 
 # Page 1: Filter Products
 elif st.session_state.page == "Filter Products":
-    st.write("### Add External Data")
+    st.write("### Using external data")
     uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
         st.session_state.df = df
+
         st.success("Data loaded successfully!")
 
-    st.markdown(
-        """
-        <h3 style="text-align: center;">Set Filters</h3>
-        """,
-        unsafe_allow_html=True
-    )
+        # Display columns for selection
+        columns = df.columns.tolist()
+        text_column = st.selectbox("Select the text column:", columns)
+        rating_column = st.selectbox("Select the rating column (optional):", [None] + columns)
+
+        # Save column selections to session state
+        st.session_state.text_column = text_column
+        st.session_state.rating_column = rating_column
+
+        st.success(f"Text column set to: {text_column}")
+        if rating_column:
+            st.success(f"Rating column set to: {rating_column}")
+        else:
+            st.info("No rating column selected.")
+
 
     selected_category = st.selectbox("Choose category:", categories, index=categories.index("CDs_and_Vinyl"))
 
     stores = list(load_store_data(selected_category).keys())
 
-    selected_store = st.selectbox("Filter by store (optional):", [""] + stores)
+    selected_stores = st.multiselect("Filter by stores (optional):", stores)
 
     min_text_length = st.number_input("Minimal number of words in review", min_value=1, value=20)
     start_date = st.date_input("Start date:", value=pd.to_datetime("2018-01-01"))
@@ -181,16 +192,27 @@ elif st.session_state.page == "Filter Products":
     if st.button("Apply Filters and train models"):
         try:
             with st.spinner("Loading data and applying filters..."):
-                filtered_reviews = filter(
-                    category=selected_category,
-                    min_text_length=min_text_length,
-                    start_date=start_date,
-                    end_date=end_date,
-                    min_reviews_per_product=min_reviews_per_product,
-                    min_average_rating=min_average_rating,
-                    store=selected_store if selected_store else None
-
-                )
+                if selected_stores:
+                    filtered_reviews = pd.concat([
+                        filter(
+                            category=selected_category,
+                            min_text_length=min_text_length,
+                            start_date=start_date,
+                            end_date=end_date,
+                            min_reviews_per_product=min_reviews_per_product,
+                            min_average_rating=min_average_rating,
+                            store=store
+                        ) for store in selected_stores
+                    ])
+                else:
+                    filtered_reviews = filter(
+                        category=selected_category,
+                        min_text_length=min_text_length,
+                        start_date=start_date,
+                        end_date=end_date,
+                        min_reviews_per_product=min_reviews_per_product,
+                        min_average_rating=min_average_rating
+                    )
 
             if filtered_reviews.empty:
                 st.write("No data matches these filters.")
@@ -255,6 +277,7 @@ elif st.session_state.page == "Ratings and words analysis":
             if "word_clouds_by_rating" not in st.session_state:
                 st.session_state.word_clouds_by_rating = create_tfidf_wordcloud(filtered_reviews)
             
+            records_per_rating = filtered_reviews.groupby('rating').size().to_dict()
             # Filter only ratings with data and word clouds generated
             word_clouds_available = {
                 rating: st.session_state.word_clouds_by_rating[rating] 
@@ -268,6 +291,7 @@ elif st.session_state.page == "Ratings and words analysis":
                 cols = st.columns(len(unique_ratings))
                 for i, rating in enumerate(unique_ratings):
                     with cols[i]:
+                        st.write(f"{rating}-Star Reviews ({records_per_rating.get(rating, 0)} records)")
                         st.image(word_clouds_available[rating], caption=f"{rating}-Star Reviews")
             else:
                 st.warning("No word clouds available for the selected reviews.")
