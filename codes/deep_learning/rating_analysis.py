@@ -112,6 +112,17 @@ def plot_monthly_avg(data, label = "rating",pointers = 20):
     plt.tight_layout()
     plt.show()
 
+def heatmap_2(df,column1,column2):
+
+    cross_tab = pd.crosstab(df[column1], df[column2])
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cross_tab, annot=True, cmap="coolwarm", fmt="d")
+    plt.title("Heatmap of correlation beetwen true values and prediction")
+    plt.xlabel(column2)
+    plt.ylabel(column1)
+    plt.show()
+
 
 def plot_monthly_avg_app(data, label="rating", pointers=20):
     data['date'] = pd.to_datetime(data['timestamp'])

@@ -332,7 +332,7 @@ elif st.session_state.page == "Filter Products":
                                 with st.spinner(f"Training model {name}..."):    
                                     train_model(filtered_reviews, 'classification',f'target_{name}',5, **model_info["parameters"])
                                 with st.spinner(f"Predicting on model {name}..."):
-                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
+                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)+1
                             if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
                                 model_path = rf".\models\regression\{name}"
                                 filtered_reviews[f'target_{name}'] = (filtered_reviews["rating"]-1)/4
@@ -374,6 +374,9 @@ elif st.session_state.page == "Filter Products":
                             st.error(f"An error occurred while predicting on VADER: {e}")
 
                     st.session_state.filtered_reviews = filtered_reviews
+                    st.dataframe(filtered_reviews, height=400)
+
+                    st.write('ok1')
                     st.session_state.page = "Menu"
                     if st.button("Back to Menu"):
                         st.rerun()  
@@ -510,8 +513,10 @@ elif st.session_state.page == "Models Results":
             if "selected_models" in st.session_state:
                 try:
                     filtered_reviews = st.session_state.filtered_reviews
+                    st.write(f'selected models: {st.session_state.selected_models}')
                     for idx, model_info in enumerate(st.session_state.selected_models):
                         name = model_info["parameters"]["localname"]
+                        st.write(f'name: {name}')
                         st.write(f"### Results for Model: {name} (Task: {model_info["task"]})")
 
                         # Placeholder for predictions and metrics
@@ -530,26 +535,149 @@ elif st.session_state.page == "Models Results":
                                 st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
                             plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
                             st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
-         
+                            st.write("#### Word Clouds by Prediction")
+                            try:
+                                if "word_clouds_by_prediction" not in st.session_state:
+                                    st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                                records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
+                                word_clouds_available = {
+                                    pred: st.session_state.word_clouds_by_prediction[pred] 
+                                    for pred in st.session_state.word_clouds_by_prediction
+                                    if pred in st.session_state.word_clouds_by_prediction
+                                }
+                                unique_predictions = sorted(word_clouds_available.keys())
+                                if unique_predictions:
+                                    cols = st.columns(len(unique_predictions))
+                                    for i, pred in enumerate(unique_predictions):
+                                        with cols[i]:
+                                            st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                            st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                                else:
+                                    st.warning("No word clouds available for the selected predictions.")
+                            except Exception as e:
+                                st.error(f"Error generating word clouds: {e}")
                             
                         if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
-                            img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
-                            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                            st.write(f'name: {name}')
+                            col1, col2, col3 = st.columns(3)
+                            results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
+                            st.write(f"predictions_{name}")
+                            st.write('regresjaa')
+                            with col1:
+                                st.write(f"MAE: {results['MAE']}")
+                                st.write(f"Average Accuracy: {results['Average Accuracy']}")
+                            with col2:
+                                metrics_df = results["Metrics Per Label"]
+                                st.table(metrics_df)
+                            with col3:
+                                img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
+                                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                            plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
+                            st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                            st.write("#### Word Clouds by Prediction")
+                            try:
+                                if "word_clouds_by_prediction" not in st.session_state:
+                                    st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                                records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
+                                word_clouds_available = {
+                                    pred: st.session_state.word_clouds_by_prediction[pred] 
+                                    for pred in st.session_state.word_clouds_by_prediction
+                                    if pred in st.session_state.word_clouds_by_prediction
+                                }
+                                unique_predictions = sorted(word_clouds_available.keys())
+                                if unique_predictions:
+                                    cols = st.columns(len(unique_predictions))
+                                    for i, pred in enumerate(unique_predictions):
+                                        with cols[i]:
+                                            st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                            st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                                else:
+                                    st.warning("No word clouds available for the selected predictions.")
+                            except Exception as e:
+                                st.error(f"Error generating word clouds: {e}")
                         if model_info["model_name"]=="bert_sentiment_prediction":
                             img_stream = heatmap(filtered_reviews,"star_based_sentiment",f"predictions_{name}")
                             st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
 
                 except Exception as e:
                     st.error(f"An error occurred during training and predicting: {e}")
-            if st.session_state.predict_on_roberta_selected and st.session_state_on_roberta_selected==True:
-                st.write("RoBERTa model will be used for prediction.")
-                img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_roberta")
-                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+            if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
+                col1, col2, col3 = st.columns(3)
+                results = calculate_metrics(filtered_reviews, "star_based_sentiment", "predictions_roberta")
+                with col1:
+                    st.write(f"MAE: {results['MAE']}")
+                    st.write(f"Average Accuracy: {results['Average Accuracy']}")
+                with col2:
+                    metrics_df = results["Metrics Per Label"]
+                    st.table(metrics_df)
+                with col3:
+                    img_stream = heatmap(filtered_reviews, "star_based_sentiment", "predictions_roberta")
+                    st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                plot_stream = plot_monthly_avg_app(filtered_reviews, label="predictions_roberta")   
+                st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                st.write("#### Word Clouds by Prediction")
+                try:
+                    if "word_clouds_by_prediction" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column="predictions_roberta")
+                    records_per_prediction = filtered_reviews.groupby("predictions_roberta").size().to_dict()
+                    word_clouds_available = {
+                        pred: st.session_state.word_clouds_by_prediction[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction
+                        if pred in st.session_state.word_clouds_by_prediction
+                    }
+                    unique_predictions = sorted(word_clouds_available.keys())
+                    if unique_predictions:
+                        cols = st.columns(len(unique_predictions))
+                        for i, pred in enumerate(unique_predictions):
+                            with cols[i]:
+                                st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                    else:
+                        st.warning("No word clouds available for the selected predictions.")
+                except Exception as e:
+                    st.error(f"Error generating word clouds: {e}")
+                # st.write("RoBERTa model will be used for prediction.")
+                # img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_roberta")
+                # st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
             
             if st.session_state.predict_on_vader_selected and st.session_state.predict_on_vader_selected==True:
-                st.write("VADER model will be used for prediction.")
-                img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_vader")
-                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                col1, col2, col3 = st.columns(3)
+                results = calculate_metrics(filtered_reviews, "star_based_sentiment", "predictions_vader")
+                with col1:
+                    st.write(f"MAE: {results['MAE']}")
+                    st.write(f"Average Accuracy: {results['Average Accuracy']}")
+                with col2:
+                    metrics_df = results["Metrics Per Label"]
+                    st.table(metrics_df)
+                with col3:
+                    img_stream = heatmap(filtered_reviews, "star_based_sentiment", "predictions_vader")
+                    st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                plot_stream = plot_monthly_avg_app(filtered_reviews, label="predictions_vader")   
+                st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                st.write("#### Word Clouds by Prediction")
+                try:
+                    if "word_clouds_by_prediction" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column="predictions_vader")
+                    records_per_prediction = filtered_reviews.groupby("predictions_vader").size().to_dict()
+                    word_clouds_available = {
+                        pred: st.session_state.word_clouds_by_prediction[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction
+                        if pred in st.session_state.word_clouds_by_prediction
+                    }
+                    unique_predictions = sorted(word_clouds_available.keys())
+                    if unique_predictions:
+                        cols = st.columns(len(unique_predictions))
+                        for i, pred in enumerate(unique_predictions):
+                            with cols[i]:
+                                st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                    else:
+                        st.warning("No word clouds available for the selected predictions.")
+                except Exception as e:
+                    st.error(f"Error generating word clouds: {e}")
+                # st.write("VADER model will be used for prediction.")
+                # img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_vader")
+                # st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
         
             if "selected_model_path" in st.session_state and st.session_state.selected_model_name is not None:   
                     name = st.session_state.selected_model_name 
