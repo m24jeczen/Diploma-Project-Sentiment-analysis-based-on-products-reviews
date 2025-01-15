@@ -190,6 +190,8 @@ elif st.session_state.page == "Filter Products":
     else:
 
         st.session_state.external = False
+        st.session_state.predict_on_roberta_selected = False
+        st.session_state.predict_on_vader_selected = False
         selected_category = st.selectbox("Choose category:", categories, index=categories.index("CDs_and_Vinyl"))
 
         stores = list(load_store_data(selected_category).keys())
@@ -225,6 +227,7 @@ elif st.session_state.page == "Filter Products":
                 st.write(f"Selected Model Path: {st.session_state.selected_model_path}")
 
             st.write("### Other available models for prediction:")
+
             predict_on_roberta_selected = st.checkbox("Predict on RoBERTa", value=False)
             predict_on_vader_selected = st.checkbox("Predict on VADER", value=False)
 
@@ -297,7 +300,8 @@ elif st.session_state.page == "Filter Products":
                                 end_date=end_date,
                                 min_reviews_per_product=min_reviews_per_product,
                                 min_average_rating=min_average_rating,
-                                store=store
+                                store=store,
+                                search_value=search_value if search_value else None
                             ) for store in selected_stores
                         ])
                     else:
@@ -307,7 +311,8 @@ elif st.session_state.page == "Filter Products":
                             start_date=start_date,
                             end_date=end_date,
                             min_reviews_per_product=min_reviews_per_product,
-                            min_average_rating=min_average_rating
+                            min_average_rating=min_average_rating,
+                            search_value=search_value if search_value else None
                         )
 
                 if filtered_reviews.empty:
@@ -352,7 +357,7 @@ elif st.session_state.page == "Filter Products":
                         except Exception as e:
                             st.error(f"An error occurred while predicting: {e}")
                     
-                    if predict_on_roberta_selected:
+                    if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
                         try: 
                             with st.spinner("Predicting on RoBERTa..."):
                                 filtered_reviews["predictions_roberta"] = predict_on_roberta(filtered_reviews)
@@ -360,7 +365,7 @@ elif st.session_state.page == "Filter Products":
                         except Exception as e:  
                             st.error(f"An error occurred while predicting on RoBERTa: {e}")
 
-                    if predict_on_vader_selected:
+                    if st.session_state.predict_on_vader_selected:
                         try: 
                             with st.spinner("Predicting on VADER..."):
                                 filtered_reviews["predictions_vader"] = predict_on_vader(filtered_reviews)
@@ -374,7 +379,7 @@ elif st.session_state.page == "Filter Products":
                         st.rerun()  
 
             except Exception as e:
-                st.error(f"An error occurred: {e}")
+                st.error(f"An error occurred in filtering data: {e}")
 
 # Page 2: Ratings and words analysis
 elif st.session_state.page == "Ratings and words analysis":
@@ -512,8 +517,21 @@ elif st.session_state.page == "Models Results":
                         # Placeholder for predictions and metrics
                         st.write("Predictions and metrics will be displayed here.")
                         if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
-                            img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
-                            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                            col1, col2, col3 = st.columns(3)
+                            results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
+                            with col1:
+                                st.write(f"MAE: {results['MAE']}")
+                                st.write(f"Average Accuracy: {results['Average Accuracy']}")
+                            with col2:
+                                metrics_df = results["Metrics Per Label"]
+                                st.table(metrics_df)
+                            with col3:
+                                img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
+                                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                            plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
+                            st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+         
+                            
                         if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
                             img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
                             st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
@@ -522,13 +540,13 @@ elif st.session_state.page == "Models Results":
                             st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
 
                 except Exception as e:
-                    st.error(f"An error occurred: {e}")
-            if st.session_state.predict_on_roberta_selected==True:
+                    st.error(f"An error occurred during training and predicting: {e}")
+            if st.session_state.predict_on_roberta_selected and st.session_state_on_roberta_selected==True:
                 st.write("RoBERTa model will be used for prediction.")
                 img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_roberta")
                 st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
             
-            if st.session_state.predict_on_vader_selected==True:
+            if st.session_state.predict_on_vader_selected and st.session_state.predict_on_vader_selected==True:
                 st.write("VADER model will be used for prediction.")
                 img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_vader")
                 st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)

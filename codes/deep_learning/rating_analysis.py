@@ -112,6 +112,32 @@ def plot_monthly_avg(data, label = "rating",pointers = 20):
     plt.tight_layout()
     plt.show()
 
+
+def plot_monthly_avg_app(data, label="rating", pointers=20):
+    data['date'] = pd.to_datetime(data['timestamp'])
+    data = data.dropna(subset=['date'])
+    data['date'] = data['date'].dt.strftime('%Y-%m-%d')
+    data = data.sort_values(by='date')
+    data['cumulative_average'] = data[label].expanding().mean()
+    markers = np.linspace(0, len(data) - 1, pointers, dtype=int)
+    plot_data = data.iloc[markers]
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(plot_data['date'], plot_data['cumulative_average'], marker='o')
+    plt.title('Change of average score through time', fontsize=14)
+    plt.xlabel('Date', fontsize=12)
+    plt.ylabel('Average score', fontsize=12)
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.tight_layout()
+
+    # Save plot to a BytesIO stream
+    img_stream = BytesIO()
+    plt.savefig(img_stream, format="png", bbox_inches="tight")
+    img_stream.seek(0)
+    plt.close()
+    return img_stream
+
 def distribiution_of_rating(df, label = "rating"):
     rating_counts = df[label].value_counts(normalize=True) * 100  # Normalize=True gives proportions
     rating_counts = rating_counts.sort_index()  # Ensure ratings are sorted from 1 to 5
