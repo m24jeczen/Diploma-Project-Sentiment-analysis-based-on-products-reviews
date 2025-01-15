@@ -92,35 +92,104 @@ if st.session_state.page == "Menu":
 elif st.session_state.page == "Filter Products":
     st.write("### Using external data")
     uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+    st.session_state.external = True
 
     if uploaded_file:
         st.write("### Data loading in progress...")
         try:
-            df = process_file_in_chunks(uploaded_file)
-            st.session_state.df = df
+            df_external = process_file_in_chunks(uploaded_file)
+            st.session_state.df_external = df_external
             st.success("Data loaded successfully!")
             st.write("### Preview of the Data")
-            st.dataframe(df.head(100), height=400)
+            st.dataframe(df_external.head(100), height=400)
             
             # Display columns for selection
-            columns = df.columns.tolist()
+            columns = df_external.columns.tolist()
             text_column = st.selectbox("Select the text column:", columns)
             rating_column = st.selectbox("Select the rating column (optional):", [None] + columns)
 
             # Save column selections to session state
-            st.session_state.text_column = text_column
-            st.session_state.rating_column = rating_column
+            df_external.rename(columns={text_column: 'text'}, inplace=True)
+            df_external.rename(columns={rating_column: 'rating'}, inplace=True)
+
+            st.session_state.text_column = 'text'
+            st.session_state.rating_column = 'rating'
 
             st.success(f"Text column set to: {text_column}")
             if rating_column:
                 st.success(f"Rating column set to: {rating_column}")
+                df_external = map_ratings_into_sentiment(df_external, positive_threshold=4)
+
             else:
                 st.info("No rating column selected.")
+            text_column_type = df_external['text'].dtype
+            st.write(f"The data type of the text column '{text_column}' is: {text_column_type}")
+            
+            # Convert the column to string, handling missing values
+            df_external['text'] = df_external['text'].apply(lambda x: str(x) if pd.notnull(x) else '')
+                
+             # Force pandas to recognize it as a string type explicitly
+            df_external['text'] = df_external['text'].astype('string')
+
+            # Check the data type again
+            text_column_type = df_external['text'].dtype
+            st.write(f"The new data type of the text column '{text_column}' is: {text_column_type}")
+            st.session_state.df_external = df_external
+            st.dataframe(df_external.head(100), height=400)
+
+            st.write("### Other available models for prediction:")
+            predict_on_roberta_selected = st.checkbox("Predict on RoBERTa", value=False)
+            predict_on_vader_selected = st.checkbox("Predict on VADER", value=False)
+            text_column_type = df_external['text'].dtype
+            st.write(f"The new data type of the text column '{text_column}' is: {text_column_type}")
+            st.session_state.predict_on_roberta_selected = predict_on_roberta_selected
+            st.session_state.predict_on_vader_selected = predict_on_vader_selected
+
+            # Logic to handle predictions (Example usage)
+            if predict_on_roberta_selected:
+                st.write("RoBERTa model will be used for prediction.")
+            if predict_on_vader_selected:
+                st.write("VADER model will be used for prediction.")
+            if st.session_state.available_models is None:
+                st.warning("No models found in the models directory.")
+
+            if predict_on_vader_selected or predict_on_roberta_selected:
+                if predict_on_roberta_selected:
+                        try: 
+                            with st.spinner("Predicting on RoBERTa..."):
+                                text_column_type = df_external['text'].dtype
+                                st.write(f"The new data type of the text column '{text_column}' is: {text_column_type}")
+                                st.session_state.df_external = df_external
+                                df_external["predictions_roberta"] = predict_on_roberta(df_external)
+                                st.success("Prediction on RoBERTa completed successfully!")
+                        except Exception as e:  
+                            st.error(f"An error occurred while predicting on RoBERTa: {e}")
+                if predict_on_vader_selected:
+                    try: 
+                        with st.spinner("Predicting on VADER..."):
+                            df_external["predictions_vader"] = predict_on_vader(df_external)
+                            st.success("Prediction on VADER completed successfully!")
+                            st.dataframe(df_external.head(100), height=400)
+                    
+                    except Exception as e:  
+                        st.error(f"An error occurred while predicting on VADER: {e}")
+
+            
+                
+
+                st.session_state.df_external = df_external
+                st.session_state.page = "Menu"
+                if st.button("Back to Menu"):
+                    st.rerun()
+
+
         except Exception as e:
             st.error(f"An error occurred: {e}")
+
+    
     else:
 
-
+        st.session_state.external = False
         selected_category = st.selectbox("Choose category:", categories, index=categories.index("CDs_and_Vinyl"))
 
         stores = list(load_store_data(selected_category).keys())
@@ -420,47 +489,56 @@ elif st.session_state.page == "Ratings and words analysis":
 # Page 3: Models Results
 elif st.session_state.page == "Models Results":
     st.write("### Models Results")
-    st.write("### Selected Models")
-
-
-    if "filtered_reviews" in st.session_state :
-        if "selected_models" in st.session_state:
-            try:
-                filtered_reviews = st.session_state.filtered_reviews
-                for idx, model_info in enumerate(st.session_state.selected_models):
-                    name = model_info["parameters"]["localname"]
-                    st.write(f"### Results for Model: {name} (Task: {model_info["task"]})")
-
-                    # Placeholder for predictions and metrics
-                    st.write("Predictions and metrics will be displayed here.")
-                    if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
-                        img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
-                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-                    if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
-                        img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
-                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-                    if model_info["model_name"]=="bert_sentiment_prediction":
-                        img_stream = heatmap(filtered_reviews,"star_based_sentiment",f"predictions_{name}")
-                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-        if st.session_state.predict_on_roberta_selected==True:
-            st.write("RoBERTa model will be used for prediction.")
-            img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_roberta")
-            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-        
+    if st.session_state.external and st.session_state.df_external is not None:
+        df_external = st.session_state.df_external
         if st.session_state.predict_on_vader_selected==True:
-            st.write("VADER model will be used for prediction.")
-            img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_vader")
-            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-    
-        if "selected_model_path" in st.session_state and st.session_state.selected_model_name is not None:   
-                name = st.session_state.selected_model_name 
-                img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
-                st.image(img_stream, caption="Heatmap of Predictions", use_column_width=True)
+                st.write("VADER model will be used for prediction.")
+                img_stream = heatmap(df_external,"star_based_sentiment","predictions_vader")
+                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+        if st.session_state.predict_on_roberta_selected==True:
+                st.write("RoBERTa model will be used for prediction.")
+                img_stream = heatmap(df_external,"star_based_sentiment","predictions_roberta")
+                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
     else:
-        st.warning("No filtered data or model results available. Please go to 'Filter Products' page first and apply filters.")
+
+        if "filtered_reviews" in st.session_state :
+            if "selected_models" in st.session_state:
+                try:
+                    filtered_reviews = st.session_state.filtered_reviews
+                    for idx, model_info in enumerate(st.session_state.selected_models):
+                        name = model_info["parameters"]["localname"]
+                        st.write(f"### Results for Model: {name} (Task: {model_info["task"]})")
+
+                        # Placeholder for predictions and metrics
+                        st.write("Predictions and metrics will be displayed here.")
+                        if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
+                            img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
+                            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                        if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
+                            img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
+                            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                        if model_info["model_name"]=="bert_sentiment_prediction":
+                            img_stream = heatmap(filtered_reviews,"star_based_sentiment",f"predictions_{name}")
+                            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
+            if st.session_state.predict_on_roberta_selected==True:
+                st.write("RoBERTa model will be used for prediction.")
+                img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_roberta")
+                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+            
+            if st.session_state.predict_on_vader_selected==True:
+                st.write("VADER model will be used for prediction.")
+                img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_vader")
+                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+        
+            if "selected_model_path" in st.session_state and st.session_state.selected_model_name is not None:   
+                    name = st.session_state.selected_model_name 
+                    img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
+                    st.image(img_stream, caption="Heatmap of Predictions", use_column_width=True)
+        else:
+            st.warning("No filtered data or model results available. Please go to 'Filter Products' page first and apply filters.")
 
     if st.button("Back to Menu"):
         st.session_state.page = "Menu"
