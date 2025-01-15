@@ -69,7 +69,8 @@ def predict_on_tuned_model(data, local_path, batch_size=256):
             if task == "classification":
                 predictions = torch.argmax(outputs, dim=1)  # Get class indices
             elif task == "regression":
-                predictions = torch.round(outputs.squeeze(-1))  # Flatten for regression
+                predictions = torch.round(outputs.squeeze(-1))  # Flatten for regression and clamping border results
+                predictions = torch.clamp(predictions, min = 1, max = 5)
 
             all_predictions.extend(predictions.cpu().numpy())  # Move predictions to CPU for further processing
 

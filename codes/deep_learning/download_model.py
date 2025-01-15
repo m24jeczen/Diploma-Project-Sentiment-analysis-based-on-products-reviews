@@ -50,8 +50,9 @@ class BertForTask(nn.Module):
         if self.task == "classification":
             return self.classifier(pooled_output)
         elif self.task == "regression":
-            logits = self.regressor(pooled_output)
-            return torch.clamp(logits,min = 1, max=5)
+            # logits = self.regressor(pooled_output)
+            # return torch.clamp(logits,min = 1, max=5)
+            return self.regressor(pooled_output)
         
         # Function for saving models in local folders
     def save_model(self, path):
@@ -117,6 +118,7 @@ def evaluate_model(model, dataloader, task, criterion, device):
                 outputs = outputs.squeeze(-1)
                 loss = criterion(outputs, labels)
                 predictions = torch.round(outputs)  # Apply scaling and rounding
+                predictions = torch.clamp(predictions, min = 1, max = 5)
                 correct += (predictions == labels).sum().item()
                 total += labels.size(0)
 
