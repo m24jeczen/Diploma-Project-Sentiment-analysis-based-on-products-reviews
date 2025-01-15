@@ -130,7 +130,10 @@ def evaluate_model(model, dataloader, task, criterion, device):
 
 # Training function
 def train_model(dataframe, task = "classification", target="rating",num_classes=5, max_epochs=3, batch_size=16, lr=2e-5, max_len=128, val_split=0.2, localname = None, early_stopping = True, patience = 3, dropout_rate = 0):
-    dataframe["label"] = dataframe[target]
+    if task == "regression":
+        dataframe["label"] = [float(x) for x in dataframe[target]]
+    else:
+        dataframe["label"] = dataframe[target]
     tokenizer = BertTokenizer.from_pretrained(bert_model.local_path)
     dataset = TextDataset(
         texts=dataframe['text'].tolist(),
