@@ -3,6 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, accuracy_score, f1_score
+from io import BytesIO
 
 
 def calculate_metrics(df, label_col='label', prediction_col='prediction'):

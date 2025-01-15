@@ -25,6 +25,15 @@ from codes.deep_learning.predict_on_model import *
 from codes.deep_learning.preprocessing import *
 from codes.deep_learning.rating_analysis import *
 
+def process_file_in_chunks(file):
+    chunk_size = 10000  # Adjust the chunk size based on your needs
+    chunk_list = []
+
+    for chunk in pd.read_csv(file, chunksize=chunk_size):
+        chunk_list.append(chunk)
+    
+    df = pd.concat(chunk_list)
+    return df
 
 # Set page configuration
 st.set_page_config(page_title="Amazon Products", layout="wide")
@@ -85,184 +94,218 @@ elif st.session_state.page == "Filter Products":
     uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
     if uploaded_file:
-        df = pd.read_csv(uploaded_file)
-        st.session_state.df = df
-
-        st.success("Data loaded successfully!")
-
-        # Display columns for selection
-        columns = df.columns.tolist()
-        text_column = st.selectbox("Select the text column:", columns)
-        rating_column = st.selectbox("Select the rating column (optional):", [None] + columns)
-
-        # Save column selections to session state
-        st.session_state.text_column = text_column
-        st.session_state.rating_column = rating_column
-
-        st.success(f"Text column set to: {text_column}")
-        if rating_column:
-            st.success(f"Rating column set to: {rating_column}")
-        else:
-            st.info("No rating column selected.")
-
-
-    selected_category = st.selectbox("Choose category:", categories, index=categories.index("CDs_and_Vinyl"))
-
-    stores = list(load_store_data(selected_category).keys())
-
-    selected_stores = st.multiselect("Filter by stores (optional):", stores)
-
-    min_text_length = st.number_input("Minimal number of words in review", min_value=1, value=20)
-    start_date = st.date_input("Start date:", value=pd.to_datetime("2018-01-01"))
-    end_date = st.date_input("End date:", value=pd.to_datetime("2018-03-01"))
-    min_reviews_per_product = st.number_input("Minimal number of reviews per product", min_value=1, value=10)
-    min_average_rating = st.slider("Minimal average rating of product:", 1.0, 5.0, 1.0)
-    search_value = st.text_input("Filter products by name (optional)")
-
-    st.markdown("""<h3 style="text-align: center;">Model Selection</h3>""", unsafe_allow_html=True)
-    st.write("### Available model Selection")
-    if st.button("Show Available Models"):
-        st.session_state.available_models = get_available_models()
-    if st.session_state.available_models:
-        st.write("### Available Models:")
-        
-        # Keep the selection box visible until a model is confirmed
-        selected_model_name = st.selectbox(
-            "Select a pre-trained model:", 
-            list(st.session_state.available_models.keys()), 
-            key="model_selectbox"
-        )
-        
-        # Update the session state only when the button is clicked
-        if st.button("Confirm Selected Model"):
-            st.session_state.selected_model_name = selected_model_name
-            st.session_state.selected_model_path = st.session_state.available_models[selected_model_name]
-            st.success(f"Selected model: {st.session_state.selected_model_name}")
-            st.write(f"Selected Model Path: {st.session_state.selected_model_path}")
-
-        if st.session_state.available_models is None:
-            st.warning("No models found in the models directory.")
-
-    st.write("### New model Selection")
-
-    # Adding multiple model selection functionality
-    if "selected_models" not in st.session_state:
-        st.session_state.selected_models = []
-
-    model_name = st.selectbox("Choose a model:", ["bert_classification", "bert_regression", "roberta_sentiment", "bert_sentiment_prediction", "vader_prediction"], key="model_name")
-    prediction_task = st.selectbox("Choose prediction target:", ["rating", "sentiment"], key="prediction_task")
-
-    # Show training parameters below model and prediction target selection
-    st.write("### Training Parameters")
-    max_epochs = st.number_input("Max Epochs", min_value=1, value=3, step=1, key="max_epochs")
-    batch_size = st.number_input("Batch Size", min_value=1, value=16, step=1, key="batch_size")
-    lr = st.number_input("Learning Rate", min_value=1e-6, value=2e-5, step=1e-6, format="%e", key="lr")
-    max_len = st.number_input("Max Length", min_value=1, value=128, step=1, key="max_len")
-    val_split = st.slider("Validation Split", min_value=0.0, max_value=1.0, value=0.2, step=0.01, key="val_split")
-    localname = st.text_input("Model name", value='model_new',key="localname")
-    early_stopping = st.checkbox("Enable Early Stopping", value=True, key="early_stopping")
-    patience = st.number_input("Early Stopping Patience", min_value=1, value=3, step=1, key="patience")
-    dropout_rate = st.slider("Dropout Rate", min_value=0.0, max_value=1.0, value=0.0, step=0.05, key="dropout_rate")
-
-    if st.button("Add Model"):
-        st.session_state.selected_models.append({
-            "model_name": model_name,
-            "task": prediction_task,
-            "parameters": {
-                "max_epochs": max_epochs,
-                "batch_size": batch_size,
-                "lr": lr,
-                "max_len": max_len,
-                "val_split": val_split,
-                "localname": localname,
-                "early_stopping": early_stopping,
-                "patience": patience,
-                "dropout_rate": dropout_rate
-            }
-        })
-        st.success(f"Added model: {model_name} for task: {prediction_task} with parameters.")
-
-    # Display selected models and parameters
-    if st.session_state.selected_models:
-        st.write("### Selected Models")
-        for idx, model_info in enumerate(st.session_state.selected_models):
-            st.write(f"{idx + 1}. Model: {model_info['model_name']}, Task: {model_info['task']}")
-            st.json(model_info['parameters'])
-
-    if st.button("Apply Filters and train models"):
+        st.write("### Data loading in progress...")
         try:
-            with st.spinner("Loading data and applying filters..."):
-                if selected_stores:
-                    filtered_reviews = pd.concat([
-                        filter(
+            df = process_file_in_chunks(uploaded_file)
+            st.session_state.df = df
+            st.success("Data loaded successfully!")
+            st.write("### Preview of the Data")
+            st.dataframe(df.head(100), height=400)
+            
+            # Display columns for selection
+            columns = df.columns.tolist()
+            text_column = st.selectbox("Select the text column:", columns)
+            rating_column = st.selectbox("Select the rating column (optional):", [None] + columns)
+
+            # Save column selections to session state
+            st.session_state.text_column = text_column
+            st.session_state.rating_column = rating_column
+
+            st.success(f"Text column set to: {text_column}")
+            if rating_column:
+                st.success(f"Rating column set to: {rating_column}")
+            else:
+                st.info("No rating column selected.")
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+    else:
+
+
+        selected_category = st.selectbox("Choose category:", categories, index=categories.index("CDs_and_Vinyl"))
+
+        stores = list(load_store_data(selected_category).keys())
+
+        selected_stores = st.multiselect("Filter by stores (optional):", stores)
+
+        min_text_length = st.number_input("Minimal number of words in review", min_value=1, value=20)
+        start_date = st.date_input("Start date:", value=pd.to_datetime("2018-01-01"))
+        end_date = st.date_input("End date:", value=pd.to_datetime("2018-03-01"))
+        min_reviews_per_product = st.number_input("Minimal number of reviews per product", min_value=1, value=10)
+        min_average_rating = st.slider("Minimal average rating of product:", 1.0, 5.0, 1.0)
+        search_value = st.text_input("Filter products by name (optional)")
+
+        st.markdown("""<h3 style="text-align: center;">Model Selection</h3>""", unsafe_allow_html=True)
+        st.write("### Available model Selection")
+        if st.button("Show Available Models"):
+            st.session_state.available_models = get_available_models()
+        if st.session_state.available_models:
+            st.write("### Available Models:")
+            
+            # Keep the selection box visible until a model is confirmed
+            selected_model_name = st.selectbox(
+                "Select a pre-trained model:", 
+                list(st.session_state.available_models.keys()), 
+                key="model_selectbox"
+            )
+            
+            # Update the session state only when the button is clicked
+            if st.button("Confirm Selected Model"):
+                st.session_state.selected_model_name = selected_model_name
+                st.session_state.selected_model_path = st.session_state.available_models[selected_model_name]
+                st.success(f"Selected model: {st.session_state.selected_model_name}")
+                st.write(f"Selected Model Path: {st.session_state.selected_model_path}")
+
+            st.write("### Other available models for prediction:")
+            predict_on_roberta_selected = st.checkbox("Predict on RoBERTa", value=False)
+            predict_on_vader_selected = st.checkbox("Predict on VADER", value=False)
+
+            st.session_state.predict_on_roberta_selected = predict_on_roberta_selected
+            st.session_state.predict_on_vader_selected = predict_on_vader_selected
+
+            # Logic to handle predictions (Example usage)
+            if predict_on_roberta_selected:
+                st.write("RoBERTa model will be used for prediction.")
+            if predict_on_vader_selected:
+                st.write("VADER model will be used for prediction.")
+            if st.session_state.available_models is None:
+                st.warning("No models found in the models directory.")
+
+        st.write("### New model Selection")
+
+        # Adding multiple model selection functionality
+        if "selected_models" not in st.session_state:
+            st.session_state.selected_models = []
+
+        model_name = st.selectbox("Choose a model:", ["bert_classification", "bert_regression", "bert_sentiment_prediction"], key="model_name")
+        prediction_task = st.selectbox("Choose prediction target:", ["rating", "sentiment"], key="prediction_task")
+
+        # Show training parameters below model and prediction target selection
+        st.write("### Training Parameters")
+        max_epochs = st.number_input("Max Epochs", min_value=1, value=3, step=1, key="max_epochs")
+        batch_size = st.number_input("Batch Size", min_value=1, value=16, step=1, key="batch_size")
+        lr = st.number_input("Learning Rate", min_value=1e-6, value=2e-5, step=1e-6, format="%e", key="lr")
+        max_len = st.number_input("Max Length", min_value=1, value=128, step=1, key="max_len")
+        val_split = st.slider("Validation Split", min_value=0.0, max_value=1.0, value=0.2, step=0.01, key="val_split")
+        localname = st.text_input("Model name", value='model_new',key="localname")
+        early_stopping = st.checkbox("Enable Early Stopping", value=True, key="early_stopping")
+        patience = st.number_input("Early Stopping Patience", min_value=1, value=3, step=1, key="patience")
+        dropout_rate = st.slider("Dropout Rate", min_value=0.0, max_value=1.0, value=0.0, step=0.05, key="dropout_rate")
+
+        if st.button("Add Model"):
+            st.session_state.selected_models.append({
+                "model_name": model_name,
+                "task": prediction_task,
+                "parameters": {
+                    "max_epochs": max_epochs,
+                    "batch_size": batch_size,
+                    "lr": lr,
+                    "max_len": max_len,
+                    "val_split": val_split,
+                    "localname": localname,
+                    "early_stopping": early_stopping,
+                    "patience": patience,
+                    "dropout_rate": dropout_rate
+                }
+            })
+            st.success(f"Added model: {model_name} for task: {prediction_task} with parameters.")
+
+        # Display selected models and parameters
+        if st.session_state.selected_models:
+            st.write("### Selected Models")
+            for idx, model_info in enumerate(st.session_state.selected_models):
+                st.write(f"{idx + 1}. Model: {model_info['model_name']}, Task: {model_info['task']}")
+                st.json(model_info['parameters'])
+
+        if st.button("Apply Filters and train models"):
+            try:
+                with st.spinner("Loading data and applying filters..."):
+                    if selected_stores:
+                        filtered_reviews = pd.concat([
+                            filter(
+                                category=selected_category,
+                                min_text_length=min_text_length,
+                                start_date=start_date,
+                                end_date=end_date,
+                                min_reviews_per_product=min_reviews_per_product,
+                                min_average_rating=min_average_rating,
+                                store=store
+                            ) for store in selected_stores
+                        ])
+                    else:
+                        filtered_reviews = filter(
                             category=selected_category,
                             min_text_length=min_text_length,
                             start_date=start_date,
                             end_date=end_date,
                             min_reviews_per_product=min_reviews_per_product,
-                            min_average_rating=min_average_rating,
-                            store=store
-                        ) for store in selected_stores
-                    ])
+                            min_average_rating=min_average_rating
+                        )
+
+                if filtered_reviews.empty:
+                    st.write("No data matches these filters.")
                 else:
-                    filtered_reviews = filter(
-                        category=selected_category,
-                        min_text_length=min_text_length,
-                        start_date=start_date,
-                        end_date=end_date,
-                        min_reviews_per_product=min_reviews_per_product,
-                        min_average_rating=min_average_rating
-                    )
+                    st.success("Filtering successful!")
+                    st.write(f"Number of records after filtering: {len(filtered_reviews)}")
+                    st.dataframe(filtered_reviews, height=400)
 
-            if filtered_reviews.empty:
-                st.write("No data matches these filters.")
-            else:
-                st.success("Filtering successful!")
-                st.write(f"Number of records after filtering: {len(filtered_reviews)}")
-                st.dataframe(filtered_reviews, height=400)
+                    filtered_reviews = map_ratings_into_sentiment(filtered_reviews, positive_threshold=4)
+                    if st.session_state.selected_models:
+                        for idx, model_info in enumerate(st.session_state.selected_models):
+                            name = model_info["parameters"]["localname"]
+                            if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
+                                model_path = rf".\models\classification\{name}"
+                                filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
+                                with st.spinner(f"Training model {name}..."):    
+                                    train_model(filtered_reviews, 'classification',f'target_{name}',5, **model_info["parameters"])
+                                with st.spinner(f"Predicting on model {name}..."):
+                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
+                            if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
+                                model_path = rf".\models\regression\{name}"
+                                filtered_reviews[f'target_{name}'] = (filtered_reviews["rating"]-1)/4
+                                with st.spinner(f"Training model {name}..."):    
+                                    train_model(filtered_reviews, 'regression',f'target_{name}',5, **model_info["parameters"])
+                                with st.spinner(f"Predicting on model {name}..."):
+                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
+                            if model_info["model_name"]=="bert_sentiment_prediction":
+                                model_path = rf".\models\sentiment_prediction\{name}"
+                                with st.spinner(f"Training model {name}..."):    
+                                    train_model(filtered_reviews,target="star_based_sentiment",num_classes=2, **model_info["parameters"])
+                                with st.spinner(f"Predicting on model {name}..."):
+                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
 
-                filtered_reviews = map_ratings_into_sentiment(filtered_reviews, positive_threshold=4)
-                if st.session_state.selected_models:
-                    for idx, model_info in enumerate(st.session_state.selected_models):
-                        name = model_info["parameters"]["localname"]
-                        if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
-                            model_path = rf".\models\classification\{name}"
-                            filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
-                            with st.spinner(f"Training model {name}..."):    
-                                train_model(filtered_reviews, 'classification',f'target_{name}',5, **model_info["parameters"])
-                            with st.spinner(f"Predicting on model {name}..."):
-                                filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
-                        if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
-                            model_path = rf".\models\regression\{name}"
-                            filtered_reviews[f'target_{name}'] = (filtered_reviews["rating"]-1)/4
-                            with st.spinner(f"Training model {name}..."):    
-                                train_model(filtered_reviews, 'regression',f'target_{name}',5, **model_info["parameters"])
-                            with st.spinner(f"Predicting on model {name}..."):
-                                filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
-                        if model_info["model_name"]=="bert_sentiment_prediction":
-                            model_path = rf".\models\sentiment_prediction\{name}"
-                            with st.spinner(f"Training model {name}..."):    
-                                train_model(filtered_reviews,target="star_based_sentiment",num_classes=2, **model_info["parameters"])
-                            with st.spinner(f"Predicting on model {name}..."):
-                                filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
+                    if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
+                        try:
+                            name = st.session_state.selected_model_name
+                            with st.spinner(f"Predicting on {name} using the chosen pre-trained model..."):
+                                filtered_reviews[f'target_{name}'] = (filtered_reviews["rating"]-1)/4
+                                filtered_reviews[f"predictions_{name}"] = predict_on_tuned_model(filtered_reviews, st.session_state.selected_model_path)
+                                st.success("Prediction completed successfully!")
+                        except Exception as e:
+                            st.error(f"An error occurred while predicting: {e}")
+                    
+                    if predict_on_roberta_selected:
+                        try: 
+                            with st.spinner("Predicting on RoBERTa..."):
+                                filtered_reviews["predictions_roberta"] = predict_on_roberta(filtered_reviews)
+                                st.success("Prediction on RoBERTa completed successfully!")
+                        except Exception as e:  
+                            st.error(f"An error occurred while predicting on RoBERTa: {e}")
 
-                if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
-                    try:
-                        name = st.session_state.selected_model_name
-                        with st.spinner(f"Predicting on {name} using the chosen pre-trained model..."):
-                            filtered_reviews[f'target_{name}'] = (filtered_reviews["rating"]-1)/4
-                            filtered_reviews[f"predictions_{name}"] = predict_on_tuned_model(filtered_reviews, st.session_state.selected_model_path)
-                            st.success("Prediction completed successfully!")
-                    except Exception as e:
-                        st.error(f"An error occurred while predicting: {e}")
+                    if predict_on_vader_selected:
+                        try: 
+                            with st.spinner("Predicting on VADER..."):
+                                filtered_reviews["predictions_vader"] = predict_on_vader(filtered_reviews)
+                                st.success("Prediction on VADER completed successfully!")
+                        except Exception as e:  
+                            st.error(f"An error occurred while predicting on VADER: {e}")
 
-                st.session_state.filtered_reviews = filtered_reviews
-                st.session_state.page = "Menu"
-                if st.button("Back to Menu"):
-                    st.rerun()  
+                    st.session_state.filtered_reviews = filtered_reviews
+                    st.session_state.page = "Menu"
+                    if st.button("Back to Menu"):
+                        st.rerun()  
 
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
 
 # Page 2: Ratings and words analysis
 elif st.session_state.page == "Ratings and words analysis":
@@ -377,33 +420,45 @@ elif st.session_state.page == "Ratings and words analysis":
 # Page 3: Models Results
 elif st.session_state.page == "Models Results":
     st.write("### Models Results")
+    st.write("### Selected Models")
 
-    if "filtered_reviews" in st.session_state and "selected_models" in st.session_state:
-        try:
-            filtered_reviews = st.session_state.filtered_reviews
-            for idx, model_info in enumerate(st.session_state.selected_models):
-                name = model_info["parameters"]["localname"]
-                st.write(f"### Results for Model: {name} (Task: {model_info["task"]})")
 
-                # Placeholder for predictions and metrics
-                st.write("Predictions and metrics will be displayed here.")
-                if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
-                    img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
-                    st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-                if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
-                    img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
-                    st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-                if model_info["model_name"]=="bert_sentiment_prediction":
-                    img_stream = heatmap(filtered_reviews,"star_based_sentiment",f"predictions_{name}")
-                    st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+    if "filtered_reviews" in st.session_state :
+        if "selected_models" in st.session_state:
+            try:
+                filtered_reviews = st.session_state.filtered_reviews
+                for idx, model_info in enumerate(st.session_state.selected_models):
+                    name = model_info["parameters"]["localname"]
+                    st.write(f"### Results for Model: {name} (Task: {model_info["task"]})")
 
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+                    # Placeholder for predictions and metrics
+                    st.write("Predictions and metrics will be displayed here.")
+                    if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
+                        img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
+                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                    if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
+                        img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
+                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                    if model_info["model_name"]=="bert_sentiment_prediction":
+                        img_stream = heatmap(filtered_reviews,"star_based_sentiment",f"predictions_{name}")
+                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+        if st.session_state.predict_on_roberta_selected==True:
+            st.write("RoBERTa model will be used for prediction.")
+            img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_roberta")
+            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+        
+        if st.session_state.predict_on_vader_selected==True:
+            st.write("VADER model will be used for prediction.")
+            img_stream = heatmap(filtered_reviews,"star_based_sentiment","predictions_vader")
+            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
     
-    if "selected_model_path" in st.session_state and "filtered_reviews" in st.session_state and st.session_state.selected_model_name is not None:   
-            name = st.session_state.selected_model_name 
-            img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
-            st.image(img_stream, caption="Heatmap of Predictions", use_column_width=True)
+        if "selected_model_path" in st.session_state and st.session_state.selected_model_name is not None:   
+                name = st.session_state.selected_model_name 
+                img_stream = heatmap(filtered_reviews, f"target_{name}", f"predictions_{name}")
+                st.image(img_stream, caption="Heatmap of Predictions", use_column_width=True)
     else:
         st.warning("No filtered data or model results available. Please go to 'Filter Products' page first and apply filters.")
 
