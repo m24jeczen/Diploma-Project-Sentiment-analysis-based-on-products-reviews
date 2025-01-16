@@ -49,3 +49,18 @@
 hr {
     display: none; 
 }
+
+/* Additional Navigation Bar Styling */
+.stRadio > div {
+    flex-direction: row; /* Ensure horizontal layout */
+}
+
+.stRadio div[role='radiogroup'] > label {
+    font-size: 1.2rem; /* Make text larger */
+    padding: 0.5rem 1.5rem; /* Add padding for larger buttons */
+    text-align: center;
+}
+
+.stRadio div[role='radiogroup'] > label[data-selected="true"] {
+    font-weight: bold; /* Highlight selected button */
+}

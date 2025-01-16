@@ -213,6 +213,18 @@ def create_review_topic_matrix_stars_for_app_new(df, lda_model, texts_bow, n_top
     import pandas as pd
     import numpy as np
     from io import BytesIO
+    from matplotlib.colors import LinearSegmentedColormap
+
+    # App theme colors
+    primary_color = "#F6B17A"
+    secondary_background_color = "#424769"
+    text_color = "#E2E8F0"
+    background_color = "#1C2138"
+
+    # Custom colormap: Shades from secondary background to primary color
+    custom_cmap = LinearSegmentedColormap.from_list(
+        "custom_theme", [secondary_background_color, primary_color], N=256
+    )
 
     # Extract unique review ratings and initialize the matrix
     unique_reviews = sorted(df['rating'].unique())
@@ -239,14 +251,35 @@ def create_review_topic_matrix_stars_for_app_new(df, lda_model, texts_bow, n_top
 
     # Plot the heatmap
     plt.figure(figsize=(20, 6))
-    sns.heatmap(matrix, annot=True, fmt=".5f", cmap="coolwarm", cbar=True)
-    plt.title("Review-Topic Matrix Heatmap")
-    plt.xlabel("Topics")
-    plt.ylabel("Ratings")
+    ax = sns.heatmap(
+        matrix,
+        annot=True,
+        fmt=".5f",
+        cmap=custom_cmap,
+        cbar_kws={'shrink': 0.8, 'format': '%.2f'},
+        annot_kws={"color": text_color}
+    )
+
+    # Customize the color bar font color
+    colorbar = ax.collections[0].colorbar
+    colorbar.ax.yaxis.set_tick_params(color=text_color)
+    plt.setp(colorbar.ax.yaxis.get_majorticklabels(), color=text_color)
+
+    # Customizing the heatmap's appearance to match the app theme
+    plt.title("Review-Topic Matrix Heatmap", color=text_color)
+    plt.xlabel("Topics", color=text_color)
+    plt.ylabel("Ratings", color=text_color)
+
+    # Set axis label colors
+    ax.tick_params(colors=text_color)
+
+    # Change the background color of the figure
+    ax.figure.set_facecolor(background_color)
+    ax.set_facecolor(background_color)
 
     # Save the plot to a BytesIO stream
     img_stream = BytesIO()
-    plt.savefig(img_stream, format="png", bbox_inches="tight")
+    plt.savefig(img_stream, format="png", bbox_inches="tight", facecolor=background_color)
     img_stream.seek(0)
     plt.close()
 
