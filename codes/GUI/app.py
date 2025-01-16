@@ -341,7 +341,8 @@ elif st.session_state.page == "Filter Products":
         if st.session_state.selected_models:
             st.write("### Selected Models")
             for idx, model_info in enumerate(st.session_state.selected_models):
-                st.write(f"{idx + 1}. Model: {model_info['model_name']}, Task: {model_info['task']}")
+                task = model_info["task"]
+                st.write(f"{idx + 1}. Model: {model_info['model_name']}, Task: {task}")
                 st.json(model_info['parameters'])
 
         if st.button("Apply Filters and train models if selected"):
@@ -595,7 +596,8 @@ elif st.session_state.page == "Models Results":
                     for idx, model_info in enumerate(st.session_state.selected_models):
                         name = model_info["parameters"]["localname"]
                         #st.write(f'name: {name}')
-                        st.write(f"#### Results for Model: {name} (Task: {model_info["task"]})")
+                        task = model_info["task"]
+                        st.write(f"#### Results for Model: {name} (Task: {task})")
 
                         # Placeholder for predictions and metrics
                         #st.write("Predictions and metrics will be displayed here.")
