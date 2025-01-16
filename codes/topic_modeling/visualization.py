@@ -206,3 +206,48 @@ def create_review_topic_matrix_stars_for_app(df, lda_model, texts_bow, n_topics,
     plt.close()
 
     return img_stream
+
+def create_review_topic_matrix_stars_for_app_new(df, lda_model, texts_bow, n_topics):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    from io import BytesIO
+
+    # Extract unique review ratings and initialize the matrix
+    unique_reviews = sorted(df['rating'].unique())
+    matrix = np.zeros((len(unique_reviews), n_topics))
+
+    # Get the topic with the highest probability for each document
+    topics_per_document = [lda_model.get_document_topics(bow) for bow in texts_bow]
+    max_topic_per_document = [max(topic_probs, key=lambda x: x[1])[0] for topic_probs in topics_per_document]
+
+    # Populate the matrix with counts
+    for i, review in enumerate(unique_reviews):
+        indices = df[df['rating'] == review].index.tolist()
+        for idx in indices:
+            if idx < len(max_topic_per_document):
+                assigned_topic = max_topic_per_document[idx]
+                matrix[i, assigned_topic] += 1
+
+    # Normalize rows
+    row_sums = matrix.sum(axis=1, keepdims=True)
+    matrix = np.divide(matrix, row_sums, out=np.zeros_like(matrix), where=row_sums != 0)
+
+    # Convert to DataFrame
+    matrix = pd.DataFrame(matrix, index=unique_reviews, columns=[f"Topic_{i}" for i in range(n_topics)])
+
+    # Plot the heatmap
+    plt.figure(figsize=(20, 6))
+    sns.heatmap(matrix, annot=True, fmt=".5f", cmap="coolwarm", cbar=True)
+    plt.title("Review-Topic Matrix Heatmap")
+    plt.xlabel("Topics")
+    plt.ylabel("Ratings")
+
+    # Save the plot to a BytesIO stream
+    img_stream = BytesIO()
+    plt.savefig(img_stream, format="png", bbox_inches="tight")
+    img_stream.seek(0)
+    plt.close()
+
+    return img_stream

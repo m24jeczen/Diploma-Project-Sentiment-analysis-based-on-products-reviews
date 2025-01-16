@@ -126,7 +126,8 @@ elif st.session_state.page == "Filter Products":
             st.write(f"The data type of the text column '{text_column}' is: {text_column_type}")
             
             # Convert the column to string, handling missing values
-            df_external['text'] = df_external['text'].apply(lambda x: str(x) if pd.notnull(x) else '')
+            df_external = df_external[df_external['text'].notna()]  # Drop rows where 'text' is NA
+            df_external = df_external[df_external['text'].str.strip() != '']  # Drop rows where 'text' is an empty string
                 
              # Force pandas to recognize it as a string type explicitly
             df_external['text'] = df_external['text'].astype('string')
@@ -134,6 +135,23 @@ elif st.session_state.page == "Filter Products":
             # Check the data type again
             text_column_type = df_external['text'].dtype
             st.write(f"The new data type of the text column '{text_column}' is: {text_column_type}")
+
+            rating_column_type = df_external['rating'].dtype
+            st.write(f"The data type of the rating column '{rating_column}' is: {rating_column_type}")
+            
+            # Convert the column to string, handling missing values
+            #df_external['rating'] = df_external['rating'].apply(lambda x: str(x) if pd.notnull(x) else '')
+                
+             # Force pandas to recognize it as a string type explicitly
+            df_external = df_external[pd.to_numeric(df_external['rating'], errors='coerce').notnull()]
+
+            df_external['rating'] = df_external['rating'].astype(int)
+
+            # Check the data type again
+            rating_column_type = df_external['rating'].dtype
+            st.write(f"The new data type of the rating column '{rating_column}' is: {rating_column_type}")
+
+
             st.session_state.df_external = df_external
             st.dataframe(df_external.head(100), height=400)
 
@@ -177,10 +195,10 @@ elif st.session_state.page == "Filter Products":
             
                 
 
-                st.session_state.df_external = df_external
-                st.session_state.page = "Menu"
-                if st.button("Back to Menu"):
-                    st.rerun()
+            st.session_state.df_external = df_external
+            st.session_state.page = "Menu"
+            if st.button("Back to Menu"):
+                st.rerun()
 
 
         except Exception as e:
@@ -388,16 +406,21 @@ elif st.session_state.page == "Filter Products":
 elif st.session_state.page == "Ratings and words analysis":
     st.write("### Ratings and words analysis")
     
-    if "filtered_reviews" in st.session_state:
-        filtered_reviews = st.session_state.filtered_reviews
-        
+    if "filtered_reviews" in st.session_state or "df_external" in st.session_state:
+        if "filtered_reviews" in st.session_state:
+            reviews = st.session_state.filtered_reviews
+        if "df_external" in st.session_state:
+            reviews = st.session_state.df_external
+        #filtered_reviews = st.session_state.filtered_reviews
+        st.dataframe(reviews.head(100), height=400)
+
         st.write("#### Word Clouds by Star Rating")
         try:
             # Only generate word clouds if not already cached
             if "word_clouds_by_rating" not in st.session_state:
-                st.session_state.word_clouds_by_rating = create_tfidf_wordcloud(filtered_reviews)
+                st.session_state.word_clouds_by_rating = create_tfidf_wordcloud(reviews)
             
-            records_per_rating = filtered_reviews.groupby('rating').size().to_dict()
+            records_per_rating = reviews.groupby('rating').size().to_dict()
             # Filter only ratings with data and word clouds generated
             word_clouds_available = {
                 rating: st.session_state.word_clouds_by_rating[rating] 
@@ -446,13 +469,13 @@ elif st.session_state.page == "Ratings and words analysis":
                     dictionary = st.session_state.dictionary
                     id2word = st.session_state.id2word
                 else:
-                    texts_bow, dictionary, id2word = preprocess_text(filtered_reviews, 100, 0.85)
+                    texts_bow, dictionary, id2word = preprocess_text(reviews, 100, 0.85)
                     st.session_state.texts_bow = texts_bow
                     st.session_state.dictionary = dictionary
                     st.session_state.id2word = id2word
 
                 lda_model = LDA_training(
-                    filtered_reviews, texts_bow, dictionary, id2word,
+                    reviews, texts_bow, dictionary, id2word,
                     n_topics=n_topics, chunksize=chunksize, passes=passes,
                     iterations=iterations, update_every=update_every, eval_every=eval_every
                 )
@@ -460,9 +483,9 @@ elif st.session_state.page == "Ratings and words analysis":
                 st.session_state.lda_model = lda_model
                 st.session_state.n_topics = n_topics
                 st.session_state.topic_word_menu = create_topic_word_menu(lda_model, n_topics)
-
-                review_topic_image = create_review_topic_matrix_stars_for_app(
-                    filtered_reviews, lda_model, texts_bow, n_topics, 0.3
+                
+                review_topic_image = create_review_topic_matrix_stars_for_app_new(
+                    reviews, lda_model, texts_bow, n_topics
                 )
                 st.session_state.review_topic_matrix = review_topic_image
 

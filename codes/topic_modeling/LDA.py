@@ -23,15 +23,55 @@ def LDA_training(df, texts_bow, dictionary, id2word,
 
     # Evaluating the model
     top_topics = model.top_topics(texts_bow, topn=20)
+    unique_topic_words = make_words_unique_per_topic(model, n_topics=n_topics, topn=20)
 
     # Calculate and display average topic coherence
     avg_topic_coherence = sum([t[1] for t in top_topics]) / n_topics
     print('Medium koherence of topics: %.4f.' % avg_topic_coherence)
 
     # Display top words for each topic
-    display_top_words_for_topics(model, n_topics=n_topics)
+    #display_top_words_for_topics(model, n_topics=n_topics)
 
+    for topic_id, words in unique_topic_words.items():
+        print(f"Topic {topic_id}: {', '.join(words)}")
     return model
+
+from collections import defaultdict
+
+def make_words_unique_per_topic(model, n_topics, topn=20):
+    # Extract top words for each topic
+    topic_words = {}
+    word_weights = defaultdict(list)
+
+    for topic_id in range(n_topics):
+        top_words = model.show_topic(topic_id, topn=topn)
+        topic_words[topic_id] = {word: weight for word, weight in top_words}
+        for word, weight in top_words:
+            word_weights[word].append((topic_id, weight))
+
+    # Resolve overlaps
+    unique_topic_words = {topic_id: set() for topic_id in range(n_topics)}
+    for word, occurrences in word_weights.items():
+        if len(occurrences) == 1:
+            # If the word appears in only one topic, keep it there
+            topic_id, _ = occurrences[0]
+            unique_topic_words[topic_id].add(word)
+        else:
+            # If the word appears in multiple topics, assign it to the one with the highest weight
+            occurrences.sort(key=lambda x: x[1], reverse=True)
+            best_topic_id = occurrences[0][0]
+            unique_topic_words[best_topic_id].add(word)
+
+    # Replace topic words with unique words
+    for topic_id in range(n_topics):
+        topic_words[topic_id] = {word: topic_words[topic_id][word]
+                                 for word in unique_topic_words[topic_id]}
+    
+    return topic_words
+
+# After LDA model training
+
+
 
 
 def display_top_words_for_topics(lda_model, n_topics, n_words=20):
