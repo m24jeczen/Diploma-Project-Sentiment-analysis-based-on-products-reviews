@@ -142,7 +142,7 @@ elif st.session_state.page == "Filter Products":
             # Display columns for selection
             columns = df_external.columns.tolist()
             text_column = st.selectbox("Select the text column:", columns)
-            rating_column = st.selectbox("Select the rating column (optional):", [None] + columns)
+            rating_column = st.selectbox("Select the rating column:", [None] + columns)
 
             # Save column selections to session state
             df_external.rename(columns={text_column: 'text'}, inplace=True)
@@ -579,10 +579,47 @@ elif st.session_state.page == "Models Results":
     if st.session_state.external and st.session_state.df_external is not None:
         df_external = st.session_state.df_external
         if st.session_state.predict_on_vader_selected==True:
-                st.write("VADER model will be used for prediction.")
-                img_stream = heatmap(df_external,"star_based_sentiment","predictions_vader")
-                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                st.write('#### Results for Model: VADER')
+                col1, col2, col3 = st.columns([1, 2, 4])
+
+                results = calculate_metrics(df_external, "star_based_sentiment", "predictions_vader")
+                with col1:
+                    st.write(f"MAE: {results['MAE']}")
+                    st.write(f"Average Accuracy: {results['Average Accuracy']}")
+                with col2:
+                    metrics_df = results["Metrics Per Label"]
+                    st.table(metrics_df)
+                with col3:
+                    img_stream = heatmap(df_external, "star_based_sentiment", "predictions_vader")
+                    st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                # plot_stream = plot_monthly_avg_app(df_external, label="predictions_vader")   
+                # st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                st.write("##### Word Clouds by Prediction")
+                try:
+                    if "word_clouds_by_prediction" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(df_external, rating_column="predictions_vader")
+                    records_per_prediction =df_external.groupby("predictions_vader").size().to_dict()
+                    word_clouds_available = {
+                        pred: st.session_state.word_clouds_by_prediction[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction
+                        if pred in st.session_state.word_clouds_by_prediction
+                    }
+                    unique_predictions = sorted(word_clouds_available.keys())
+                    if unique_predictions:
+                        cols = st.columns(len(unique_predictions))
+                        for i, pred in enumerate(unique_predictions):
+                            with cols[i]:
+                                st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                    else:
+                        st.warning("No word clouds available for the selected predictions.")
+                except Exception as e:
+                    st.error(f"Error generating word clouds: {e}")
+                # st.write("VADER model will be used for prediction.")
+                # img_stream = heatmap(df_external,"star_based_sentiment","predictions_vader")
+                # st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
         if st.session_state.predict_on_roberta_selected==True:
+                
                 st.write("RoBERTa model will be used for prediction.")
                 img_stream = heatmap(df_external,"star_based_sentiment","predictions_roberta")
                 st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
