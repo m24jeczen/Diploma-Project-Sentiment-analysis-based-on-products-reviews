@@ -429,7 +429,7 @@ elif st.session_state.page == "Filter Products":
                                 st.success(f"Prediction with {name} completed successfully!")
                             if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
                                 model_path = rf".\models\regression\{name}"
-                                filtered_reviews[f'target_{name}'] = (filtered_reviews["rating"]-1)/4
+                                filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
                                 with st.spinner(f"Training model {name}..."):    
                                     train_model(filtered_reviews, 'regression',f'target_{name}',5, **model_info["parameters"])
                                 with st.spinner(f"Predicting on model {name}..."):
