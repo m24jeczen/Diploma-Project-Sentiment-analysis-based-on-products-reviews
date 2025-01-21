@@ -125,6 +125,52 @@ def plot_number_of_words_percentages(data, limit=500):
     plt.show()
 
 
+
+from io import BytesIO
+
+def plot_number_of_words_percentages_for_app(data, limit=500):
+    # Update the color theme from the app configuration
+    primary_color = "#F6B17A"  # Line color
+    background_color = "#1C2138"  # Entire image background
+    secondary_background_color = "#424769"  # Gridlines and plot background
+    text_color = "#E2E8F0"  # Text color
+    light_grid_color = "#5B637C"  # Lighter gridlines
+
+    # Data processing
+    numbers = data["text"].str.split().str.len()
+    sorted_numbers = np.sort(numbers)
+    cumulative_probabilities = np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.plot(sorted_numbers, cumulative_probabilities, color=primary_color)
+    plt.title('Cumulative Distribution of Words Length of Reviews', fontsize=14, color=text_color)
+    plt.xlabel('Words per review', fontsize=12, color=text_color)
+    plt.ylabel('Percentage of all reviews', fontsize=12, color=text_color)
+    plt.xticks(np.arange(0, limit, limit // 10), color=text_color)
+    plt.yticks(np.arange(0, 1.1, 0.1), color=text_color)
+    plt.xlim(0, limit)
+    plt.ylim(0, 1)
+
+    # Explicitly set tick colors for both axes
+    plt.gca().tick_params(axis='x', colors=text_color)
+    plt.gca().tick_params(axis='y', colors=text_color)
+
+    plt.grid(True, color=light_grid_color, linestyle='--', linewidth=0.5)
+    plt.gca().set_facecolor(secondary_background_color)
+    plt.tight_layout()
+
+    # Set the overall background color
+    plt.gcf().patch.set_facecolor(background_color)
+
+    # Save plot to a BytesIO stream
+    img_stream = BytesIO()
+    plt.savefig(img_stream, format="png", bbox_inches="tight", facecolor=background_color)
+    img_stream.seek(0)
+    plt.close()
+    return img_stream
+
+
 def plot_monthly_avg(data, label = "rating",pointers = 20):
     data['date'] = pd.to_datetime(data['timestamp'])
     # Usuń wiersze z nieprawidłowymi datami

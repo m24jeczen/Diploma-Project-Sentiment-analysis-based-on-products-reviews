@@ -120,19 +120,66 @@ st.markdown(
 
 # Menu Page (Main Entry Point)
 if st.session_state.page == "Menu":
-    st.write("### Main Menu")
-    
-    if st.button("Go to Filter Products"):
-        st.session_state.page = "Filter Products"
-        st.rerun()
+    st.write("")
+    cols = st.columns([1,5])
+    with cols[0]:
+        st.write("")
+        st.write("")
+        st.write("### Main Menu")
+        st.write("")
+        if st.button("Go to Filter Products"):
+            st.session_state.page = "Filter Products"
+            st.rerun()
 
-    if st.button("Go to ratings and words analysis"):
-        st.session_state.page = "Ratings and words analysis"
-        st.rerun()
+        if st.button("Go to ratings and words analysis"):
+            st.session_state.page = "Ratings and words analysis"
+            st.rerun()
 
-    if st.button("Go to Models Results"):
-        st.session_state.page = "Models Results"
-        st.rerun()
+        if st.button("Go to Models Results"):
+            st.session_state.page = "Models Results"
+            st.rerun()
+    with cols[1]:
+        st.markdown("""
+        <div style="
+            background-color: #1C2138; 
+            color: #E2E8F0; 
+            padding: 20px; 
+            border-radius: 10px; 
+            text-align: center; 
+            font-family: 'sans-serif'; 
+            line-height: 1.6;">
+            <h1 style="color: #F6B17A; font-size: 35px; margin-bottom: 10px;">
+                Welcome to the Amazon Products Analysis App!
+            </h1>
+            <p style="font-size: 18px; margin-bottom: 20px;">
+                This interactive application provides powerful tools to analyze Amazon product reviews using 
+                advanced Natural Language Processing (NLP) and machine learning. Here's what you can do:
+            </p>
+            <ul style="text-align: left; max-width: 800px; margin: 0 auto; padding-left: 20px; font-size: 16px;">
+                <li><strong>Filter and Explore Reviews:</strong> Load and filter review data based on criteria like rating, review length, date range, and product categories.</li>
+                <li><strong>Analyze Ratings and Trends:</strong> Visualize rating distributions, trends, and create insightful word clouds segmented by rating.</li>
+                <li><strong>Model Predictions:</strong> Train and evaluate machine learning models for sentiment analysis, rating prediction, and more using your data or pre-trained models.</li>
+                <li><strong>Topic Modeling:</strong> Discover topics from reviews using Latent Dirichlet Allocation (LDA).</li>
+                <li><strong>Custom Models:</strong> Configure and train models with adjustable parameters for specific predictions.</li>
+            </ul>
+            <h2 style="color: #F6B17A; font-size: 24px; margin-top: 30px;">
+                Navigation Guide
+            </h2>
+            <ul style="text-align: left; max-width: 800px; margin: 0 auto; padding-left: 20px; font-size: 16px;">
+                <li><strong>Filter Products:</strong> Filter Amazon data or upload external data. Choose pre-trained models or train your own with selected hyperparameters. 
+                <span style="color: #E89D60;"><strong>Warning:</strong></span> Returning to this page will reset all filtering, models, and analysis data. After filtering, 
+                you can navigate freely between other pages without losing progress.</li>
+                <li><strong>Ratings and Words Analysis:</strong> Explore and analyze ratings (if available) and textual data. Perform LDA topic modeling for deeper insights.</li>
+                <li><strong>Models Results:</strong> Evaluate and inspect the results of your selected or trained models, with detailed performance metrics and insights.</li>
+            </ul>
+            <p style="margin-top: 20px; font-size: 18px; color: #F6B17A;">
+                Get started now to uncover insights from your data!
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+
     
 
 # Page 1: Filter Products
@@ -543,6 +590,13 @@ elif st.session_state.page == "Ratings and words analysis":
                     st.write("**Rating Trend Over Time**")
                     trend_img_stream = plot_monthly_avg_app(reviews)
                     st.image(trend_img_stream, caption="Average Rating Over Time")
+            cols = st.columns([3,2])
+            with cols[0]:
+                st.write("**Cumulative Distribution of Words Length**")
+                word_length_img_stream = plot_number_of_words_percentages_for_app(reviews)
+                st.image(word_length_img_stream, caption="Cumulative Distribution of Words Length of Reviews")
+            with cols[1]:
+                st.write('tekst')
 
         except Exception as e:
             st.error(f"An error occurred while generating distribution or trends: {str(e)}")
