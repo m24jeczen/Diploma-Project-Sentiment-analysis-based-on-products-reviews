@@ -245,9 +245,9 @@ def plot_monthly_avg_app(data, label="rating", pointers=20):
     # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(plot_data['date'], plot_data['cumulative_average'], marker='o', color=primary_color)
-    plt.title('Change of average score through time', fontsize=14, color=text_color)
+    plt.title(f'Change of {label} score through time', fontsize=14, color=text_color)
     plt.xlabel('Date', fontsize=12, color=text_color)
-    plt.ylabel('Average score', fontsize=12, color=text_color)
+    plt.ylabel(f'Average {label}', fontsize=12, color=text_color)
     plt.xticks(rotation=45, color=text_color)
     plt.yticks(color=text_color)
 
@@ -336,8 +336,8 @@ def distribiution_of_rating_for_app(df, label="rating"):
         plt.text(ratings[i], percentage + 1, f'{percentage:.1f}%', ha='center', fontsize=10, color=text_color)
 
     # Add labels and title
-    plt.title('Percentage Frequency of Ratings', fontsize=16, color=text_color)
-    plt.xlabel('Rating', fontsize=12)
+    plt.title(f'Percentage Frequency of {label}', fontsize=16, color=text_color)
+    plt.xlabel(label, fontsize=12)
     plt.ylabel('Percentage Frequency (%)', fontsize=12)
     plt.xticks(ticks=ratings, labels=ratings)  # Ensure x-ticks are aligned with ratings
     plt.ylim(0, max(percentages) + 5)  # Add some padding above the tallest bar

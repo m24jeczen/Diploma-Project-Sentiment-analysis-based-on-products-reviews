@@ -21,7 +21,7 @@ from codes.topic_modeling.visualization import *
 from codes.visualizations import *
 
 from codes.deep_learning.download_model import *
-from codes.deep_learning.predict_on_model import *
+from codes.deep_learning.predict_on_model import * 
 from codes.deep_learning.preprocessing import *
 from codes.deep_learning.rating_analysis import *
 
@@ -180,8 +180,6 @@ if st.session_state.page == "Menu":
 
 
 
-    
-
 # Page 1: Filter Products
 elif st.session_state.page == "Filter Products":
     st.write("## Using external data")
@@ -272,7 +270,7 @@ elif st.session_state.page == "Filter Products":
         st.write("")
         st.write("")
         st.write("")
-        if st.button("Train and Predict"):
+        if st.button("Predict"):
 
             if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
                 try:
@@ -937,23 +935,68 @@ elif st.session_state.page == "Models Results":
             #st.dataframe(reviews.head(100), height=400)
             if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
                 st.write('#### Results for Model: RoBERTa')
-                st.write("")
-                st.write("")
-                st.write("")
-                col1, col2, col3 = st.columns([1, 2, 4])
 
+                col1, col2 = st.columns([3, 4])
                 results = calculate_metrics(reviews, "star_based_sentiment", "predictions_roberta")
                 with col1:
-                    st.write(f"MAE: {results['MAE']}")
-                    st.write(f"Average Accuracy: {results['Average Accuracy']}")
-                with col2:
+                    st.write("##### Metrics:")
+                    st.markdown(f"""
+                    <div style="
+                        font-size: 17px; 
+                        font-weight: bold; 
+                        color: #F6B17A; 
+                        margin-bottom: 10px;">
+                        MAE: {results['MAE']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div style="
+                        font-size: 17px; 
+                        font-weight: bold; 
+                        color: #F6B17A; 
+                        margin-bottom: 10px;">
+                        Average Accuracy: {results['Average Accuracy']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.write(" ")
+                    st.write("##### Metrics Per Label:")
                     metrics_df = results["Metrics Per Label"]
                     st.table(metrics_df)
-                with col3:
+
+                    st.markdown("""
+                    <div style="
+                        background-color: #424769; 
+                        color: #E2E8F0; 
+                        padding: 13px; 
+                        border-radius: 10px; 
+                        font-family: 'sans-serif'; 
+                        line-height: 1.6; 
+                        margin-top: 10px;">
+                        <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                        <p style="font-size: 16px; margin-bottom: 8px;">
+                            <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                            number of correct predictions by the number of all observations.
+                        </p>
+                        <p style="font-size: 16px; margin-bottom: 8px;">
+                            <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                            the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                        </p>
+                        <p style="font-size: 16px; margin-bottom: 8px;">
+                            <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                            people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                            can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                            mistake the model made during predictions.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.write("")
+                    st.write("")
                     img_stream = heatmap(reviews, "star_based_sentiment", "predictions_roberta")
                     st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                
                 if not st.session_state.filtered_reviews.empty:
-                    col1, col2 = st.columns([1, 1])
+                    col1, col2 = st.columns([2, 3])
                     with col1:
                         st.write("**Rating Distribution**")
                         distrib_img_stream = distribiution_of_rating_for_app(reviews, "predictions_roberta")
