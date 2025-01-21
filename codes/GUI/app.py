@@ -621,22 +621,38 @@ elif st.session_state.page == "Ratings and words analysis":
 
         # LDA Parameters and Analysis
         st.write("#### LDA Analysis Parameters")
-        with st.form("lda_parameters_form"):
-            n_topics = st.number_input("Number of Topics", min_value=1, max_value=20, value=9, step=1)
-            chunksize = st.number_input("Chunksize", min_value=10, max_value=5000, value=1000, step=10)
-            passes = st.number_input("Number of Passes", min_value=1, max_value=100, value=10, step=1)
-            iterations = st.number_input("Iterations", min_value=10, max_value=500, value=200, step=10)
-            update_every = st.selectbox("Update Every", options=[1, 0], index=0)
-            eval_every = st.number_input("Evaluate Every", min_value=1, max_value=500, value=100, step=10)
+        col1, col2 = st.columns([1,1])
+        with col1:
+            with st.form("lda_parameters_form"):
+                n_topics = st.number_input("Number of Topics", min_value=1, max_value=20, value=9, step=1)
+                chunksize = st.number_input("Chunksize", min_value=10, max_value=5000, value=1000, step=10)
+                passes = st.number_input("Number of Passes", min_value=1, max_value=100, value=10, step=1)
+                iterations = st.number_input("Iterations", min_value=10, max_value=500, value=200, step=10)
+                update_every = st.selectbox("Update Every", options=[1, 0], index=0)
+                submit_button = st.form_submit_button("Perform LDA Analysis")
 
-            submit_button = st.form_submit_button("Perform LDA Analysis")
+        with col2:
+            st.markdown("""
+            ### What is LDA?
+            Latent Dirichlet Allocation (LDA) is a statistical model used for topic modeling. It discovers hidden topics in a collection of text documents and assigns each document a distribution over these topics. It’s widely used for extracting meaningful insights from large text datasets.
+
+            ### Key Parameters Explained:
+            - **n_topics**: The number of topics to discover in the text data.
+            - **chunksize**: The number of documents processed at a time during training. Larger values speed up training but require more memory.
+            - **passes**: The number of complete iterations over the entire dataset. More passes improve accuracy but increase computation time.
+            - **iterations**: The maximum number of iterations for the model’s optimization process during each pass.
+            - **update_every**: How often the model’s parameters are updated during training. A value of `1` updates after each chunk, while `0` delays updates until all chunks are processed.
+
+            LDA helps uncover topics in your reviews, providing insights into recurring themes or patterns.
+            """)
+
 
         if "lda_model" not in st.session_state:
             st.session_state.lda_model = None
             st.session_state.topic_word_menu = None
             st.session_state.review_topic_matrix = None
             st.session_state.selected_topic_id = None
-
+        st.write("")
         if submit_button:
             try:
                 if "texts_bow" in st.session_state and "dictionary" in st.session_state and "id2word" in st.session_state:
@@ -652,14 +668,14 @@ elif st.session_state.page == "Ratings and words analysis":
                 lda_model = LDA_training(
                     reviews, texts_bow, dictionary, id2word,
                     n_topics=n_topics, chunksize=chunksize, passes=passes,
-                    iterations=iterations, update_every=update_every, eval_every=eval_every
+                    iterations=iterations, update_every=update_every
                 )
 
                 st.session_state.lda_model = lda_model
                 st.session_state.n_topics = n_topics
                 st.session_state.topic_word_menu = create_topic_word_menu(lda_model, n_topics)
                 
-                review_topic_image = create_review_topic_matrix_stars_for_app_new(
+                review_topic_image = create_review_topic_matrix_stars_for_app_new_2(
                     reviews, lda_model, texts_bow, n_topics
                 )
                 st.session_state.review_topic_matrix = review_topic_image
@@ -820,26 +836,75 @@ elif st.session_state.page == "Models Results":
                                 st.error(f"Error generating word clouds: {e}")
                             
                         if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
-                            st.write(f'name: {name}')
-                            col1, col2, col3 = st.columns(3)
+
+                            col1, col2 = st.columns([3, 4])
                             results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
-                            st.write(f"predictions_{name}")
-                            st.write('regresjaa')
                             with col1:
-                                st.write(f"MAE: {results['MAE']}")
-                                st.write(f"Average Accuracy: {results['Average Accuracy']}")
-                            with col2:
+                                st.write("##### Metrics:")
+                                st.markdown(f"""
+                                <div style="
+                                    font-size: 17px; 
+                                    font-weight: bold; 
+                                    color: #F6B17A; 
+                                    margin-bottom: 10px;">
+                                    MAE: {results['MAE']}
+                                </div>
+                                """, unsafe_allow_html=True)
+                                st.markdown(f"""
+                                <div style="
+                                    font-size: 17px; 
+                                    font-weight: bold; 
+                                    color: #F6B17A; 
+                                    margin-bottom: 10px;">
+                                    Average Accuracy: {results['Average Accuracy']}
+                                </div>
+                                """, unsafe_allow_html=True)
+                                st.write(" ")
+                                st.write("##### Metrics Per Label:")
                                 metrics_df = results["Metrics Per Label"]
                                 st.table(metrics_df)
-                            with col3:
+
+                                st.markdown("""
+                                <div style="
+                                    background-color: #424769; 
+                                    color: #E2E8F0; 
+                                    padding: 13px; 
+                                    border-radius: 10px; 
+                                    font-family: 'sans-serif'; 
+                                    line-height: 1.6; 
+                                    margin-top: 10px;">
+                                    <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                                        number of correct predictions by the number of all observations.
+                                    </p>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                                        the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                                    </p>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                                        people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                                        can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                                        mistake the model made during predictions.
+                                    </p>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            with col2:
+                                st.write("")
+                                st.write("")
                                 img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
                                 st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-                            col1, col2 = st.columns([1, 1])
+
+
+                            col1, col2 = st.columns([2, 3])
                             with col1:
                                 st.write("**Rating Distribution**")
                                 distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
                                 st.image(distrib_img_stream, caption="Rating Distribution")
                             with col2:
+                                st.write("")
+                                st.write("")
                                 plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
                                 st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                             st.write("##### Word Clouds by Prediction")
