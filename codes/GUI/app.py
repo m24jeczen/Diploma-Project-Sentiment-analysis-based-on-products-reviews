@@ -246,19 +246,25 @@ elif st.session_state.page == "Filter Products":
         st.session_state.predict_on_roberta_selected = predict_on_roberta_selected
         st.session_state.predict_on_vader_selected = predict_on_vader_selected
         st.write("### Available local trained models for prediction:")
-        if st.button("Show Available Models"):
-            st.session_state.available_models = get_available_models()
-        if st.session_state.available_models:
-            st.write("#### Available Models:")
-            
+        st.write("### Model Selection")
+
+        # Step 1: Choose task type
+        task_type = st.radio("Select the task type:", ("classification", "regression"), key="task_type_radio")
+
+        # Step 2: Show available models dynamically
+        st.session_state.available_models = get_available_models(task_type)
+
+        if st.session_state.get("available_models"):
+            st.write(f"#### Available {task_type.capitalize()} Models:")
+
             # Keep the selection box visible until a model is confirmed
             selected_model_name = st.selectbox(
                 "Select a pre-trained model:", 
                 list(st.session_state.available_models.keys()), 
                 key="model_selectbox"
             )
-            
-            # Update the session state only when the button is clicked
+
+            # Add a confirm button to finalize the selection
             if st.button("Confirm Selected Model"):
                 st.session_state.selected_model_name = selected_model_name
                 st.session_state.selected_model_path = st.session_state.available_models[selected_model_name]
@@ -390,20 +396,25 @@ elif st.session_state.page == "Filter Products":
                     st.error(f"An error occurred in filtering data: {e}")
             
         st.markdown("### Model Selection", unsafe_allow_html=True)
-        st.write("### Available local trained models for prediction:")
-        if st.button("Show Available Models"):
-            st.session_state.available_models = get_available_models()
-        if st.session_state.available_models:
-            st.write("#### Available Models:")
-            
+        st.write("### Model Selection")
+
+        # Step 1: Choose task type
+        task_type = st.radio("Select the task type:", ("classification", "regression"), key="task_type_radio")
+
+        # Step 2: Show available models dynamically
+        st.session_state.available_models = get_available_models(task_type)
+
+        if st.session_state.get("available_models"):
+            st.write(f"#### Available {task_type.capitalize()} Models:")
+
             # Keep the selection box visible until a model is confirmed
             selected_model_name = st.selectbox(
                 "Select a pre-trained model:", 
                 list(st.session_state.available_models.keys()), 
                 key="model_selectbox"
             )
-             
-            # Update the session state only when the button is clicked
+
+            # Add a confirm button to finalize the selection
             if st.button("Confirm Selected Model"):
                 st.session_state.selected_model_name = selected_model_name
                 st.session_state.selected_model_path = st.session_state.available_models[selected_model_name]
@@ -932,6 +943,7 @@ elif st.session_state.page == "Models Results":
 
             else: 
                 reviews = st.session_state.df_external
+            
             #st.dataframe(reviews.head(100), height=400)
             if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
                 st.write('#### Results for Model: RoBERTa')

@@ -221,14 +221,29 @@ def train_model(dataframe, task = "classification", target="rating",num_classes=
         
 
 
-def get_available_models():
+# def get_available_models():
+#     models_dir = "./models"
+#     available_models = {}
+#     for root, dirs, files in os.walk(models_dir):
+#         if "config.json" in files:
+#             relative_path = os.path.relpath(root, models_dir)
+#             model_name = os.path.basename(root)
+#             available_models[model_name] = os.path.join(models_dir, relative_path)
+#     return available_models
+
+
+def get_available_models(task_type):
+
     models_dir = "./models"
     available_models = {}
+
     for root, dirs, files in os.walk(models_dir):
         if "config.json" in files:
             relative_path = os.path.relpath(root, models_dir)
             model_name = os.path.basename(root)
-            available_models[model_name] = os.path.join(models_dir, relative_path)
-    return available_models
+            # Check if the model is in the desired task type directory
+            if task_type in relative_path.split(os.sep) and model_name != "bert-base-uncased":
+                available_models[model_name] = os.path.join(models_dir, relative_path)
 
+    return available_models
 
