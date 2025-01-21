@@ -139,18 +139,18 @@ def plot_number_of_words_percentages_for_app(data, limit=500):
     # Data processing
     numbers = data["text"].str.split().str.len()
     sorted_numbers = np.sort(numbers)
-    cumulative_probabilities = np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
+    cumulative_probabilities = 100 * np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
 
     # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(sorted_numbers, cumulative_probabilities, color=primary_color)
     plt.title('Cumulative Distribution of Words Length of Reviews', fontsize=14, color=text_color)
     plt.xlabel('Words per review', fontsize=12, color=text_color)
-    plt.ylabel('Percentage of all reviews', fontsize=12, color=text_color)
+    plt.ylabel('Percentage of all reviews (%)', fontsize=12, color=text_color)
     plt.xticks(np.arange(0, limit, limit // 10), color=text_color)
-    plt.yticks(np.arange(0, 1.1, 0.1), color=text_color)
+    plt.yticks(np.arange(0, 101, 10), color=text_color)  # Adjusted to percentages (0-100)
     plt.xlim(0, limit)
-    plt.ylim(0, 1)
+    plt.ylim(0, 100)  # Set percentage range
 
     # Explicitly set tick colors for both axes
     plt.gca().tick_params(axis='x', colors=text_color)
@@ -169,6 +169,7 @@ def plot_number_of_words_percentages_for_app(data, limit=500):
     img_stream.seek(0)
     plt.close()
     return img_stream
+
 
 
 def plot_monthly_avg(data, label = "rating",pointers = 20):

@@ -51,7 +51,7 @@ st.markdown(
         border-radius: 10px;
         text-align: center;
     ">
-        <h1 style="color: #F6B17A; font-size: 35px; margin: 0;">
+        <h1 style="color: #F6B17A; font-size: 50px; margin: 0;">
             AMAZON PRODUCTS ANALYSIS
         </h1>
     </div>
@@ -212,10 +212,15 @@ elif st.session_state.page == "Filter Products":
 
             st.success(f"Text column set to: {text_column}")
             if rating_column:
+                positive_threshold = st.radio(
+                    "Select the positive threshold for ratings:", 
+                    options=[3, 4], 
+                    index=1  # Default to 4
+                )
                 st.success(f"Rating column set to: {rating_column}")
                 df_external.rename(columns={rating_column: 'rating'}, inplace=True)
                 st.session_state.rating_column = 'rating'
-                df_external = map_ratings_into_sentiment(df_external, positive_threshold=4)
+                df_external = map_ratings_into_sentiment(df_external, positive_threshold)
                 df_external = df_external[pd.to_numeric(df_external['rating'], errors='coerce').notnull()]
                 df_external['rating'] = df_external['rating'].astype(int)
 
@@ -339,6 +344,11 @@ elif st.session_state.page == "Filter Products":
             end_date = st.date_input("End date:", value=pd.to_datetime("2018-03-01"))
             min_reviews_per_product = st.number_input("Minimal number of reviews per product", min_value=1, value=10)
             min_average_rating = st.slider("Minimal average rating of product:", 1.0, 5.0, 1.0)
+            positive_threshold = st.radio(
+                "Select the positive threshold for ratings:", 
+                options=[3, 4], 
+                index=1  # Default to 4
+            )
             search_value = st.text_input("Filter products by name (optional)")
 
         with cols[1]:
@@ -376,7 +386,7 @@ elif st.session_state.page == "Filter Products":
                         st.write(f"Number of records after filtering: {len(filtered_reviews)}")
                         st.dataframe(filtered_reviews, height=485)
 
-                        filtered_reviews = map_ratings_into_sentiment(filtered_reviews, positive_threshold=4)
+                        filtered_reviews = map_ratings_into_sentiment(filtered_reviews, positive_threshold)
                         st.session_state.filtered_reviews = filtered_reviews
                 except Exception as e:
                     st.error(f"An error occurred in filtering data: {e}")
@@ -590,13 +600,19 @@ elif st.session_state.page == "Ratings and words analysis":
                     st.write("**Rating Trend Over Time**")
                     trend_img_stream = plot_monthly_avg_app(reviews)
                     st.image(trend_img_stream, caption="Average Rating Over Time")
-            cols = st.columns([3,2])
+            cols = st.columns([9,1,7])
             with cols[0]:
                 st.write("**Cumulative Distribution of Words Length**")
                 word_length_img_stream = plot_number_of_words_percentages_for_app(reviews)
                 st.image(word_length_img_stream, caption="Cumulative Distribution of Words Length of Reviews")
             with cols[1]:
-                st.write('tekst')
+                st.write("")
+            with cols[2]:
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write('Cumulative distribiuton describes what percentage of texts has same or lower number of words in review. For example if in plot value above 150 Words per review is 90, that means 90% of texts are has maximum 150 words. If too many texts are very short it may indicate a small amount of information that could be obtain from chosen dataset. Moreover one of parameters in training models describes maximum text lenght. Analylizing this plot you can find balance between information and training speed.')
 
         except Exception as e:
             st.error(f"An error occurred while generating distribution or trends: {str(e)}")
@@ -690,7 +706,7 @@ elif st.session_state.page == "Ratings and words analysis":
 
 # Page 3: Models Results
 elif st.session_state.page == "Models Results":
-    st.write("### Models Results")
+    st.write("# Models Results")
     if ("filtered_reviews" in st.session_state and not st.session_state.filtered_reviews.empty) or ("df_external" in st.session_state and "rating_column" in st.session_state and st.session_state.rating_column is not None):
         if "df_external" in st.session_state and "rating_column" in st.session_state and st.session_state.rating_column is not None:
             df_external = st.session_state.df_external
@@ -710,24 +726,75 @@ elif st.session_state.page == "Models Results":
                         st.write("")
                         st.write("")
                         if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
-                            col1, col2, col3 = st.columns([1, 2, 4])
+                            col1, col2 = st.columns([3, 4])
 
                             results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
+                            
                             with col1:
-                                st.write(f"MAE: {results['MAE']}")
-                                st.write(f"Average Accuracy: {results['Average Accuracy']}")
-                            with col2:
+                                st.write("##### Metrics:")
+                                st.markdown(f"""
+                                <div style="
+                                    font-size: 17px; 
+                                    font-weight: bold; 
+                                    color: #F6B17A; 
+                                    margin-bottom: 10px;">
+                                    MAE: {results['MAE']}
+                                </div>
+                                """, unsafe_allow_html=True)
+                                st.markdown(f"""
+                                <div style="
+                                    font-size: 17px; 
+                                    font-weight: bold; 
+                                    color: #F6B17A; 
+                                    margin-bottom: 10px;">
+                                    Average Accuracy: {results['Average Accuracy']}
+                                </div>
+                                """, unsafe_allow_html=True)
+                                st.write(" ")
+                                st.write("##### Metrics Per Label:")
                                 metrics_df = results["Metrics Per Label"]
                                 st.table(metrics_df)
-                            with col3:
+
+                                st.markdown("""
+                                <div style="
+                                    background-color: #424769; 
+                                    color: #E2E8F0; 
+                                    padding: 13px; 
+                                    border-radius: 10px; 
+                                    font-family: 'sans-serif'; 
+                                    line-height: 1.6; 
+                                    margin-top: 10px;">
+                                    <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                                        number of correct predictions by the number of all observations.
+                                    </p>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                                        the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                                    </p>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                                        people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                                        can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                                        mistake the model made during predictions.
+                                    </p>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            with col2:
+                                st.write("")
+                                st.write("")
                                 img_stream = heatmap(filtered_reviews, "rating", f"predictions_{name}")
                                 st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
-                            col1, col2 = st.columns([1, 1])
+
+
+                            col1, col2 = st.columns([2, 3])
                             with col1:
                                 st.write("**Rating Distribution**")
                                 distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
                                 st.image(distrib_img_stream, caption="Rating Distribution")
                             with col2:
+                                st.write("")
                                 plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
                                 st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                             st.write("#### Word Clouds by Prediction")
@@ -863,29 +930,75 @@ elif st.session_state.page == "Models Results":
                 
             
             if st.session_state.predict_on_vader_selected and st.session_state.predict_on_vader_selected==True:
-                st.write('#### Results for Model: VADER')
-                st.write("")
-                st.write("")
-                st.write("")
-                col1, col2, col3 = st.columns([1, 2, 4])
+                st.write('## Results for Model: VADER')
 
+                col1, col2 = st.columns([3, 4])
                 results = calculate_metrics(reviews, "star_based_sentiment", "predictions_vader")
                 with col1:
-                    st.write(f"MAE: {results['MAE']}")
-                    st.write(f"Average Accuracy: {results['Average Accuracy']}")
-                with col2:
+                    st.write("##### Metrics:")
+                    st.markdown(f"""
+                    <div style="
+                        font-size: 17px; 
+                        font-weight: bold; 
+                        color: #F6B17A; 
+                        margin-bottom: 10px;">
+                        MAE: {results['MAE']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div style="
+                        font-size: 17px; 
+                        font-weight: bold; 
+                        color: #F6B17A; 
+                        margin-bottom: 10px;">
+                        Average Accuracy: {results['Average Accuracy']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.write(" ")
+                    st.write("##### Metrics Per Label:")
                     metrics_df = results["Metrics Per Label"]
                     st.table(metrics_df)
-                with col3:
+
+                    st.markdown("""
+                    <div style="
+                        background-color: #424769; 
+                        color: #E2E8F0; 
+                        padding: 13px; 
+                        border-radius: 10px; 
+                        font-family: 'sans-serif'; 
+                        line-height: 1.6; 
+                        margin-top: 10px;">
+                        <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                        <p style="font-size: 16px; margin-bottom: 8px;">
+                            <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                            number of correct predictions by the number of all observations.
+                        </p>
+                        <p style="font-size: 16px; margin-bottom: 8px;">
+                            <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                            the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                        </p>
+                        <p style="font-size: 16px; margin-bottom: 8px;">
+                            <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                            people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                            can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                            mistake the model made during predictions.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.write("")
+                    st.write("")
                     img_stream = heatmap(reviews, "star_based_sentiment", 'predictions_vader')
                     st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                
                 if not st.session_state.filtered_reviews.empty:
-                    col1, col2 = st.columns([1, 1])
+                    col1, col2 = st.columns([2, 3])
                     with col1:
                         st.write("**Rating Distribution**")
                         distrib_img_stream = distribiution_of_rating_for_app(reviews, "predictions_vader")
                         st.image(distrib_img_stream, caption="Rating Distribution")
                     with col2:
+                        st.write("")
                         plot_stream = plot_monthly_avg_app(filtered_reviews, label="predictions_vader")   
                         st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                     
