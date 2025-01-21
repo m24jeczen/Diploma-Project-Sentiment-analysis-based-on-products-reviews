@@ -105,7 +105,7 @@ def heatmap(df, column1, column2):
 def plot_number_of_words_percentages(data, limit=500):
     numbers = data["text"].str.split().str.len()
     sorted_numbers = np.sort(numbers)
-    cumulative_probabilities = np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
+    cumulative_probabilities = 100*np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
 
 
     plt.figure(figsize=(10, 6))
