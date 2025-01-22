@@ -249,27 +249,38 @@ elif st.session_state.page == "Filter Products":
         st.write("### Model Selection")
 
         # Step 1: Choose task type
-        task_type = st.radio("Select the task type:", ("classification", "regression"), key="task_type_radio")
+        # Step 1: Choose task type 
+        task_type = st.radio("Select the task type:", ("classification", "regression", "sentiment_prediction"), key="task_type_radio")
 
         # Step 2: Show available models dynamically
-        st.session_state.available_models = get_available_models(task_type)
+        st.session_state.available_models = get_available_models(task_type, parent_dir="models")
+        #print("Available models:", st.session_state.available_models)
 
         if st.session_state.get("available_models"):
-            st.write(f"#### Available {task_type.capitalize()} Models:")
+            st.write(f"#### Available {task_type.replace('_', ' ').capitalize()} Models:")
 
             # Keep the selection box visible until a model is confirmed
-            selected_model_name = st.selectbox(
+            selected_available_model_name = st.selectbox(
                 "Select a pre-trained model:", 
                 list(st.session_state.available_models.keys()), 
                 key="model_selectbox"
             )
 
+            # Store the selection immediately in the session state
+            st.session_state["current_selected_model"] = selected_available_model_name
+            #print(f'Selected model from dropdown: {selected_available_model_name}')
+
             # Add a confirm button to finalize the selection
             if st.button("Confirm Selected Model"):
-                st.session_state.selected_model_name = selected_model_name
-                st.session_state.selected_model_path = st.session_state.available_models[selected_model_name]
-                st.success(f"Selected model: {st.session_state.selected_model_name}")
+                st.session_state.selected_available_model_name = st.session_state["current_selected_model"]
+                st.session_state.selected_model_path = st.session_state.available_models[st.session_state["current_selected_model"]]
+                st.success(f"Selected model: {st.session_state.selected_available_model_name}")
                 st.write(f"Selected Model Path: {st.session_state.selected_model_path}")
+
+        # Debugging Output
+        st.write(f"Selected model name: {st.session_state.get('selected_available_model_name')}")
+        st.write(f"Selected model path: {st.session_state.get('selected_model_path')}")
+
         st.write("")
         st.write("")
         st.write("")
@@ -280,7 +291,7 @@ elif st.session_state.page == "Filter Products":
 
             if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
                 try:
-                    name = st.session_state.selected_model_name
+                    name = st.session_state.selected_available_model_name
                     with st.spinner(f"Predicting on {name} using the chosen pre-trained model..."):
                         df_external[f"predictions_{name}"] = predict_on_tuned_model(df_external, st.session_state.selected_model_path)
                         st.success("Prediction completed successfully!")
@@ -395,20 +406,21 @@ elif st.session_state.page == "Filter Products":
                 except Exception as e:
                     st.error(f"An error occurred in filtering data: {e}")
             
-        st.markdown("### Model Selection", unsafe_allow_html=True)
-        st.write("### Model Selection")
+        st.write("## Models Selection")
+        st.write("### Available trained models for prediction:")
+
 
         # Step 1: Choose task type
-        task_type = st.radio("Select the task type:", ("classification", "regression"), key="task_type_radio")
+        task_type = st.radio("Select the task type:", ("classification", "regression", "sentiment_prediction"), key="task_type_radio")
 
         # Step 2: Show available models dynamically
-        st.session_state.available_models = get_available_models(task_type)
+        st.session_state.available_models = get_available_models(task_type, parent_dir="models")
 
         if st.session_state.get("available_models"):
-            st.write(f"#### Available {task_type.capitalize()} Models:")
+            st.write(f"#### Available {task_type.replace('_', ' ').capitalize()} Models:")
 
             # Keep the selection box visible until a model is confirmed
-            selected_model_name = st.selectbox(
+            selected_available_model_name = st.selectbox(
                 "Select a pre-trained model:", 
                 list(st.session_state.available_models.keys()), 
                 key="model_selectbox"
@@ -416,12 +428,10 @@ elif st.session_state.page == "Filter Products":
 
             # Add a confirm button to finalize the selection
             if st.button("Confirm Selected Model"):
-                st.session_state.selected_model_name = selected_model_name
-                st.session_state.selected_model_path = st.session_state.available_models[selected_model_name]
-                st.success(f"Selected model: {st.session_state.selected_model_name}")
+                st.session_state.selected_available_model_name = selected_available_model_name
+                st.session_state.selected_model_path = st.session_state.available_models[selected_available_model_name]
+                st.success(f"Selected model: {st.session_state.selected_available_model_name}")
                 st.write(f"Selected Model Path: {st.session_state.selected_model_path}")
-
-            st.write("## Available trained models for prediction:")
 
             predict_on_roberta_selected = st.checkbox("Predict on RoBERTa", value=False)
             predict_on_vader_selected = st.checkbox("Predict on VADER", value=False)
@@ -429,17 +439,32 @@ elif st.session_state.page == "Filter Products":
             st.session_state.predict_on_roberta_selected = predict_on_roberta_selected
             st.session_state.predict_on_vader_selected = predict_on_vader_selected
 
-        st.write("### New model Selection")
+        st.write("## Train new model")
 
         # Adding multiple model selection functionality
         if "selected_models" not in st.session_state:
             st.session_state.selected_models = []
 
+        model_descriptions = {
+            "bert_classification": "Predicts ratings using classification.",
+            "bert_regression": "Predicts ratings using regression.",
+            "bert_sentiment_prediction": "Predicts sentiment."
+        }
+
+        # Display descriptions for the models
+        st.write("#### Models Descriptions")
+        st.write("- **bert_classification**: Predicts ratings using classification.")
+        st.write("- **bert_regression**: Predicts ratings using regression.")
+        st.write("- **bert_sentiment_prediction**: Predicts sentiment.")
+
+        # Allow the user to select a model
         model_name = st.selectbox("Choose a model:", ["bert_classification", "bert_regression", "bert_sentiment_prediction"], key="model_name")
-        prediction_task = st.selectbox("Choose prediction target:", ["rating", "sentiment"], key="prediction_task")
+
+        # Display the selected model
+        st.write(f"Selected Model: {model_name}")
 
         # Show training parameters below model and prediction target selection
-        st.write("### Training Parameters")
+        st.write("#### Training Parameters")
         max_epochs = st.number_input("Max Epochs", min_value=1, value=3, step=1, key="max_epochs")
         batch_size = st.number_input("Batch Size", min_value=1, value=16, step=1, key="batch_size")
         lr = st.number_input("Learning Rate", min_value=1e-6, value=2e-5, step=1e-6, format="%e", key="lr")
@@ -453,7 +478,6 @@ elif st.session_state.page == "Filter Products":
         if st.button("Add Model with selected parameters"):
             st.session_state.selected_models.append({
                 "model_name": model_name,
-                "task": prediction_task,
                 "parameters": {
                     "max_epochs": max_epochs,
                     "batch_size": batch_size,
@@ -466,26 +490,25 @@ elif st.session_state.page == "Filter Products":
                     "dropout_rate": dropout_rate
                 }
             })
-            st.success(f"Added model: {model_name} for task: {prediction_task} with parameters.")
+            st.success(f"Added model: {model_name} with parameters.")
 
         # Display selected models and parameters
         if st.session_state.selected_models:
             st.write("### Selected Models")
             for idx, model_info in enumerate(st.session_state.selected_models):
-                task = model_info["task"]
-                st.write(f"{idx + 1}. Model: {model_info['model_name']}, Task: {task}")
+                st.write(f"{idx + 1}. Model: {model_info['model_name']}")
                 st.json(model_info['parameters'])
         
         filtered_reviews = st.session_state.filtered_reviews
         st.write("")
         st.write("")
-        if st.button("Train and Predict"):
-            if filtered_reviews.empty==False:
-                if st.session_state.selected_models:
+        if filtered_reviews.empty==False:
+            if st.session_state.selected_models:
+                if st.button("Train and Predict"):
                     try: 
                         for idx, model_info in enumerate(st.session_state.selected_models):
                             name = model_info["parameters"]["localname"]
-                            if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
+                            if model_info["model_name"] == "bert_classification":
                                 model_path = rf".\models\classification\{name}"
                                 filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
                                 with st.spinner(f"Training model {name}..."):    
@@ -493,7 +516,7 @@ elif st.session_state.page == "Filter Products":
                                 with st.spinner(f"Predicting on model {name}..."):
                                     filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)+1
                                 st.success(f"Prediction with {name} completed successfully!")
-                            if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
+                            if model_info["model_name"] == "bert_regression":
                                 model_path = rf".\models\regression\{name}"
                                 filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
                                 with st.spinner(f"Training model {name}..."):    
@@ -508,38 +531,58 @@ elif st.session_state.page == "Filter Products":
                                 with st.spinner(f"Predicting on model {name}..."):
                                     filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
                                 st.success(f"Prediction with {name} completed successfully!")
+                            
 
                     except Exception as e:
                         st.error(f"An error occurred during training and predicting: {e}")
+            
+            if (
+                ("selected_model_path" in st.session_state and st.session_state.selected_model_path is not None) or
+                st.session_state.get("predict_on_roberta_selected", False) or
+                st.session_state.get("predict_on_vader_selected", False)
+            ):
+                if st.button("Predict"):
+                    if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
+                        try:
+                            selected_model_path = st.session_state.selected_model_path
+                            name = st.session_state.selected_available_model_name
+                            if "classification" in selected_model_path:
+                                filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
+                                with st.spinner(f"Predicting on pre-trained model {name}..."):
+                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)+1
+                                st.success("Prediction completed successfully!")
 
-                if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
-                    try:
-                        name = st.session_state.selected_model_name
-                        with st.spinner(f"Predicting on {name} using the chosen pre-trained model..."):
-                            filtered_reviews[f'target_{name}'] = (filtered_reviews["rating"]-1)/4
-                            filtered_reviews[f"predictions_{name}"] = predict_on_tuned_model(filtered_reviews, st.session_state.selected_model_path)
-                            st.success("Prediction completed successfully!")
-                    except Exception as e:
-                        st.error(f"An error occurred while predicting: {e}")
-                
-                
-                if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
-                    try: 
-                        with st.spinner("Predicting on RoBERTa..."):
-                            filtered_reviews["predictions_roberta"] = predict_on_roberta(filtered_reviews)
-                            st.success("Prediction on RoBERTa completed successfully!")
-                    except Exception as e:  
-                        st.error(f"An error occurred while predicting on RoBERTa: {e}")
+                            elif "regression" in selected_model_path:
+                                filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
+                                with st.spinner(f"Predicting on pre-trained model {name}..."):
+                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)
+                                st.success("Prediction completed successfully!")
+                            elif "sentiment_prediction" in selected_model_path:
+                                with st.spinner(f"Predicting on pre-trained model {name}..."):
+                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)
+                                st.success("Prediction completed successfully!")
+                            
+                        except Exception as e:
+                            st.error(f"An error occurred while predicting: {e}")
+                    
+                    
+                    if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
+                        try: 
+                            with st.spinner("Predicting on RoBERTa..."):
+                                filtered_reviews["predictions_roberta"] = predict_on_roberta(filtered_reviews)
+                                st.success("Prediction on RoBERTa completed successfully!")
+                        except Exception as e:  
+                            st.error(f"An error occurred while predicting on RoBERTa: {e}")
 
-                if st.session_state.predict_on_vader_selected:
-                    try: 
-                        with st.spinner("Predicting on VADER..."):
-                            filtered_reviews["predictions_vader"] = predict_on_vader(filtered_reviews)
-                            st.success("Prediction on VADER completed successfully!")
-                    except Exception as e:  
-                        st.error(f"An error occurred while predicting on VADER: {e}")
-            else:
-                st.warning('You have to filter data before training and predicting.')
+                    if st.session_state.predict_on_vader_selected:
+                        try: 
+                            with st.spinner("Predicting on VADER..."):
+                                filtered_reviews["predictions_vader"] = predict_on_vader(filtered_reviews)
+                                st.success("Prediction on VADER completed successfully!")
+                        except Exception as e:  
+                            st.error(f"An error occurred while predicting on VADER: {e}")
+        else:
+            st.warning('You have to filter data before training and predicting.')
 
         st.write("")
         st.write("")
@@ -551,6 +594,7 @@ elif st.session_state.page == "Filter Products":
         st.write("")
         st.write("")
         st.write("")
+        print(st.session_state.selected_model_path)
         if st.button("Back to Menu"):
             st.session_state.page = "Menu"
             st.rerun()  
@@ -732,6 +776,7 @@ elif st.session_state.page == "Ratings and words analysis":
 # Page 3: Models Results
 elif st.session_state.page == "Models Results":
     st.write("# Models Results")
+
     if ("filtered_reviews" in st.session_state and not st.session_state.filtered_reviews.empty) or ("df_external" in st.session_state and "rating_column" in st.session_state and st.session_state.rating_column is not None):
         if "df_external" in st.session_state and "rating_column" in st.session_state and st.session_state.rating_column is not None:
             df_external = st.session_state.df_external
@@ -745,12 +790,11 @@ elif st.session_state.page == "Models Results":
                 if "selected_models" in st.session_state:
                     for idx, model_info in enumerate(st.session_state.selected_models):
                         name = model_info["parameters"]["localname"]
-                        task = model_info["task"]
-                        st.write(f"#### Results for Model: {name} (Task: {task})")
+                        st.write(f"#### Results for Model: {name}")
                         st.write("")
                         st.write("")
                         st.write("")
-                        if model_info["task"] == "rating" and model_info["model_name"] == "bert_classification":
+                        if model_info["model_name"] == "bert_classification":
                             col1, col2 = st.columns([3, 4])
 
                             results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
@@ -844,7 +888,7 @@ elif st.session_state.page == "Models Results":
                             except Exception as e:
                                 st.error(f"Error generating word clouds: {e}")
                             
-                        if model_info["task"] == "rating" and model_info["model_name"] == "bert_regression":
+                        if model_info["model_name"] == "bert_regression":
 
                             col1, col2 = st.columns([3, 4])
                             results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
@@ -937,13 +981,102 @@ elif st.session_state.page == "Models Results":
                                     st.warning("No word clouds available for the selected predictions.")
                             except Exception as e:
                                 st.error(f"Error generating word clouds: {e}")
+
                         if model_info["model_name"]=="bert_sentiment_prediction":
-                            img_stream = heatmap(filtered_reviews,"star_based_sentiment",f"predictions_{name}")
-                            st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+                            col1, col2 = st.columns([3, 4])
+                            results = calculate_metrics(filtered_reviews, "star_based_sentiment", f"predictions_{name}")
+                            with col1:
+                                st.write("##### Metrics:")
+                                st.markdown(f"""
+                                <div style="
+                                    font-size: 17px; 
+                                    font-weight: bold; 
+                                    color: #F6B17A; 
+                                    margin-bottom: 10px;">
+                                    MAE: {results['MAE']}
+                                </div>
+                                """, unsafe_allow_html=True)
+                                st.markdown(f"""
+                                <div style="
+                                    font-size: 17px; 
+                                    font-weight: bold; 
+                                    color: #F6B17A; 
+                                    margin-bottom: 10px;">
+                                    Average Accuracy: {results['Average Accuracy']}
+                                </div>
+                                """, unsafe_allow_html=True)
+                                st.write(" ")
+                                st.write("##### Metrics Per Label:")
+                                metrics_df = results["Metrics Per Label"]
+                                st.table(metrics_df)
+
+                                st.markdown("""
+                                <div style="
+                                    background-color: #424769; 
+                                    color: #E2E8F0; 
+                                    padding: 13px; 
+                                    border-radius: 10px; 
+                                    font-family: 'sans-serif'; 
+                                    line-height: 1.6; 
+                                    margin-top: 10px;">
+                                    <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                                        number of correct predictions by the number of all observations.
+                                    </p>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                                        the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                                    </p>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">
+                                        <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                                        people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                                        can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                                        mistake the model made during predictions.
+                                    </p>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            with col2:
+                                st.write("")
+                                st.write("")
+                                img_stream = heatmap(filtered_reviews, "star_based_sentiment", f"predictions_{name}")
+                                st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+
+
+                            col1, col2 = st.columns([2, 3])
+                            with col1:
+                                st.write("**Rating Distribution**")
+                                distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
+                                st.image(distrib_img_stream, caption="Rating Distribution")
+                            with col2:
+                                st.write("")
+                                st.write("")
+                                plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
+                                st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                            st.write("##### Word Clouds by Prediction")
+                            try:
+                                if "word_clouds_by_prediction" not in st.session_state:
+                                    st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                                records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
+                                word_clouds_available = {
+                                    pred: st.session_state.word_clouds_by_prediction[pred] 
+                                    for pred in st.session_state.word_clouds_by_prediction
+                                    if pred in st.session_state.word_clouds_by_prediction
+                                }
+                                unique_predictions = sorted(word_clouds_available.keys())
+                                if unique_predictions:
+                                    cols = st.columns(len(unique_predictions))
+                                    for i, pred in enumerate(unique_predictions):
+                                        with cols[i]:
+                                            st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                            st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                                else:
+                                    st.warning("No word clouds available for the selected predictions.")
+                            except Exception as e:
+                                st.error(f"Error generating word clouds: {e}")                            
 
             else: 
                 reviews = st.session_state.df_external
-            
             #st.dataframe(reviews.head(100), height=400)
             if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
                 st.write('#### Results for Model: RoBERTa')
@@ -1153,10 +1286,296 @@ elif st.session_state.page == "Models Results":
                         st.warning("No word clouds available for the selected predictions.")
                 except Exception as e:
                     st.error(f"Error generating word clouds: {e}")
-            if "selected_model_path" in st.session_state and st.session_state.selected_model_name is not None:   
-                    name = st.session_state.selected_model_name 
-                    img_stream = heatmap(reviews, f"target_{name}", f"predictions_{name}")
-                    st.image(img_stream, caption="Heatmap of Predictions", use_column_width=True)
+
+            # The pre-trained models        
+            if "selected_model_path" in st.session_state and st.session_state.selected_available_model_name is not None:
+                selected_model_path = st.session_state.selected_model_path
+                name = st.session_state.selected_available_model_name
+                st.write(f'## Results for Model: {name}')
+                if "classification" in selected_model_path:
+                    col1, col2 = st.columns([3, 4])
+
+                    results = calculate_metrics(reviews, "rating", f"predictions_{name}")
+                    
+                    with col1:
+                        st.write("##### Metrics:")
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 17px; 
+                            font-weight: bold; 
+                            color: #F6B17A; 
+                            margin-bottom: 10px;">
+                            MAE: {results['MAE']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 17px; 
+                            font-weight: bold; 
+                            color: #F6B17A; 
+                            margin-bottom: 10px;">
+                            Average Accuracy: {results['Average Accuracy']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.write(" ")
+                        st.write("##### Metrics Per Label:")
+                        metrics_df = results["Metrics Per Label"]
+                        st.table(metrics_df)
+
+                        st.markdown("""
+                        <div style="
+                            background-color: #424769; 
+                            color: #E2E8F0; 
+                            padding: 13px; 
+                            border-radius: 10px; 
+                            font-family: 'sans-serif'; 
+                            line-height: 1.6; 
+                            margin-top: 10px;">
+                            <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                                number of correct predictions by the number of all observations.
+                            </p>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                                the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                            </p>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                                people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                                can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                                mistake the model made during predictions.
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        st.write("")
+                        st.write("")
+                        img_stream = heatmap(reviews, "rating", f"predictions_{name}")
+                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+
+
+                    col1, col2 = st.columns([2, 3])
+                    with col1:
+                        st.write("**Rating Distribution**")
+                        distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
+                        st.image(distrib_img_stream, caption="Rating Distribution")
+                    with col2:
+                        st.write("")
+                        plot_stream = plot_monthly_avg_app(reviews, label=f"predictions_{name}")   
+                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                    st.write("#### Word Clouds by Prediction")
+                    try:
+                        if "word_clouds_by_prediction" not in st.session_state:
+                            st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
+                        records_per_prediction = reviews.groupby(f"predictions_{name}").size().to_dict()
+                        word_clouds_available = {
+                            pred: st.session_state.word_clouds_by_prediction[pred] 
+                            for pred in st.session_state.word_clouds_by_prediction
+                            if pred in st.session_state.word_clouds_by_prediction
+                        }
+                        unique_predictions = sorted(word_clouds_available.keys())
+                        if unique_predictions:
+                            cols = st.columns(len(unique_predictions))
+                            for i, pred in enumerate(unique_predictions):
+                                with cols[i]:
+                                    st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                    st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                        else:
+                            st.warning("No word clouds available for the selected predictions.")
+                    except Exception as e:
+                        st.error(f"Error generating word clouds: {e}")                    
+                    
+
+                elif "regression" in selected_model_path:
+                    col1, col2 = st.columns([3, 4])
+                    results = calculate_metrics(reviews, "rating", f"predictions_{name}")
+                    with col1:
+                        st.write("##### Metrics:")
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 17px; 
+                            font-weight: bold; 
+                            color: #F6B17A; 
+                            margin-bottom: 10px;">
+                            MAE: {results['MAE']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 17px; 
+                            font-weight: bold; 
+                            color: #F6B17A; 
+                            margin-bottom: 10px;">
+                            Average Accuracy: {results['Average Accuracy']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.write(" ")
+                        st.write("##### Metrics Per Label:")
+                        metrics_df = results["Metrics Per Label"]
+                        st.table(metrics_df)
+
+                        st.markdown("""
+                        <div style="
+                            background-color: #424769; 
+                            color: #E2E8F0; 
+                            padding: 13px; 
+                            border-radius: 10px; 
+                            font-family: 'sans-serif'; 
+                            line-height: 1.6; 
+                            margin-top: 10px;">
+                            <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                                number of correct predictions by the number of all observations.
+                            </p>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                                the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                            </p>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                                people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                                can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                                mistake the model made during predictions.
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        st.write("")
+                        st.write("")
+                        img_stream = heatmap(reviews, "rating", f"predictions_{name}")
+                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+
+
+                    col1, col2 = st.columns([2, 3])
+                    with col1:
+                        st.write("**Rating Distribution**")
+                        distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
+                        st.image(distrib_img_stream, caption="Rating Distribution")
+                    with col2:
+                        st.write("")
+                        st.write("")
+                        plot_stream = plot_monthly_avg_app(reviews, label=f"predictions_{name}")   
+                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                    st.write("##### Word Clouds by Prediction")
+                    try:
+                        if "word_clouds_by_prediction" not in st.session_state:
+                            st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
+                        records_per_prediction = reviews.groupby(f"predictions_{name}").size().to_dict()
+                        word_clouds_available = {
+                            pred: st.session_state.word_clouds_by_prediction[pred] 
+                            for pred in st.session_state.word_clouds_by_prediction
+                            if pred in st.session_state.word_clouds_by_prediction
+                        }
+                        unique_predictions = sorted(word_clouds_available.keys())
+                        if unique_predictions:
+                            cols = st.columns(len(unique_predictions))
+                            for i, pred in enumerate(unique_predictions):
+                                with cols[i]:
+                                    st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                    st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                        else:
+                            st.warning("No word clouds available for the selected predictions.")
+                    except Exception as e:
+                        st.error(f"Error generating word clouds: {e}")
+
+                    
+                elif "sentiment_prediction" in selected_model_path:
+                    col1, col2 = st.columns([3, 4])
+                    results = calculate_metrics(filtered_reviews, "star_based_sentiment", f"predictions_{name}")
+                    with col1:
+                        st.write("##### Metrics:")
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 17px; 
+                            font-weight: bold; 
+                            color: #F6B17A; 
+                            margin-bottom: 10px;">
+                            MAE: {results['MAE']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 17px; 
+                            font-weight: bold; 
+                            color: #F6B17A; 
+                            margin-bottom: 10px;">
+                            Average Accuracy: {results['Average Accuracy']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.write(" ")
+                        st.write("##### Metrics Per Label:")
+                        metrics_df = results["Metrics Per Label"]
+                        st.table(metrics_df)
+
+                        st.markdown("""
+                        <div style="
+                            background-color: #424769; 
+                            color: #E2E8F0; 
+                            padding: 13px; 
+                            border-radius: 10px; 
+                            font-family: 'sans-serif'; 
+                            line-height: 1.6; 
+                            margin-top: 10px;">
+                            <h2 style="color: #F6B17A; font-size: 20px; margin-bottom: 1px;">Metrics Explanation</h2>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>Accuracy:</strong> Accuracy is the simplest metric to evaluate any prediction. It is computed by dividing the 
+                                number of correct predictions by the number of all observations.
+                            </p>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>F-score:</strong> F-score is the harmonic mean between precision and recall. However, accuracy is unreliable in 
+                                the case of unbalanced data. The F-score punishes more for assigning all values to one class.
+                            </p>
+                            <p style="font-size: 16px; margin-bottom: 8px;">
+                                <strong>MAE (Mean Absolute Error):</strong> MAE is a typical regression metric that is interpretable and easy to understand by many 
+                                people. Despite performing classification, in the context of our data, this metric is still valuable because every class 
+                                can be interpreted as a value in the range of 1 to 5. The mean absolute error provides information about the average 
+                                mistake the model made during predictions.
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        st.write("")
+                        st.write("")
+                        img_stream = heatmap(filtered_reviews, "star_based_sentiment", f"predictions_{name}")
+                        st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
+
+
+                    col1, col2 = st.columns([2, 3])
+                    with col1:
+                        st.write("**Rating Distribution**")
+                        distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
+                        st.image(distrib_img_stream, caption="Rating Distribution")
+                    with col2:
+                        st.write("")
+                        st.write("")
+                        plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
+                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                    st.write("##### Word Clouds by Prediction")
+                    try:
+                        if "word_clouds_by_prediction" not in st.session_state:
+                            st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                        records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
+                        word_clouds_available = {
+                            pred: st.session_state.word_clouds_by_prediction[pred] 
+                            for pred in st.session_state.word_clouds_by_prediction
+                            if pred in st.session_state.word_clouds_by_prediction
+                        }
+                        unique_predictions = sorted(word_clouds_available.keys())
+                        if unique_predictions:
+                            cols = st.columns(len(unique_predictions))
+                            for i, pred in enumerate(unique_predictions):
+                                with cols[i]:
+                                    st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                    st.image(word_clouds_available[pred], caption=f"{pred} Predictions")
+                        else:
+                            st.warning("No word clouds available for the selected predictions.")
+                    except Exception as e:
+                        st.error(f"Error generating word clouds: {e}")           
+                    
+
+
     if (("rating_column" not in st.session_state or st.session_state.rating_column is None) and ("df_external" in st.session_state)):
         df_external = st.session_state.df_external
         if st.session_state.predict_on_vader_selected==True:

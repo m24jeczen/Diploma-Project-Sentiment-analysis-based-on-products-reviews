@@ -232,9 +232,33 @@ def train_model(dataframe, task = "classification", target="rating",num_classes=
 #     return available_models
 
 
-def get_available_models(task_type):
+# def get_available_models(task_type):
 
-    models_dir = "./models"
+#     models_dir = "./models"
+#     available_models = {}
+
+#     for root, dirs, files in os.walk(models_dir):
+#         if "config.json" in files:
+#             relative_path = os.path.relpath(root, models_dir)
+#             model_name = os.path.basename(root)
+#             # Check if the model is in the desired task type directory
+#             if task_type in relative_path.split(os.sep) and model_name != "bert-base-uncased":
+#                 available_models[model_name] = os.path.join(models_dir, relative_path)
+
+#     return available_models
+
+def get_available_models(task_type, parent_dir="models"):
+    """
+    Get available models based on the task type (classification, regression, or sentiment_prediction).
+
+    Args:
+        task_type (str): The task type, either 'classification', 'regression', or 'sentiment_prediction'.
+        parent_dir (str): The parent directory containing the model directories.
+
+    Returns:
+        dict: A dictionary of available models for the specified task type.
+    """
+    models_dir = f"./{parent_dir}"
     available_models = {}
 
     for root, dirs, files in os.walk(models_dir):
@@ -242,7 +266,8 @@ def get_available_models(task_type):
             relative_path = os.path.relpath(root, models_dir)
             model_name = os.path.basename(root)
             # Check if the model is in the desired task type directory
-            if task_type in relative_path.split(os.sep) and model_name != "bert-base-uncased":
+            path_parts = relative_path.split(os.sep)
+            if task_type in path_parts and model_name != "bert-base-uncased":
                 available_models[model_name] = os.path.join(models_dir, relative_path)
 
     return available_models
