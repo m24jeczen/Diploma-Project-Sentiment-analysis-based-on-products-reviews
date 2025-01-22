@@ -268,7 +268,6 @@ elif st.session_state.page == "Filter Products":
 
             # Store the selection immediately in the session state
             st.session_state["current_selected_model"] = selected_available_model_name
-            #print(f'Selected model from dropdown: {selected_available_model_name}')
 
             # Add a confirm button to finalize the selection
             if st.button("Confirm Selected Model"):
@@ -277,9 +276,6 @@ elif st.session_state.page == "Filter Products":
                 st.success(f"Selected model: {st.session_state.selected_available_model_name}")
                 st.write(f"Selected Model Path: {st.session_state.selected_model_path}")
 
-        # Debugging Output
-        st.write(f"Selected model name: {st.session_state.get('selected_available_model_name')}")
-        st.write(f"Selected model path: {st.session_state.get('selected_model_path')}")
 
         st.write("")
         st.write("")
@@ -594,7 +590,6 @@ elif st.session_state.page == "Filter Products":
         st.write("")
         st.write("")
         st.write("")
-        print(st.session_state.selected_model_path)
         if st.button("Back to Menu"):
             st.session_state.page = "Menu"
             st.rerun()  
@@ -1288,7 +1283,7 @@ elif st.session_state.page == "Models Results":
                     st.error(f"Error generating word clouds: {e}")
 
             # The pre-trained models        
-            if "selected_model_path" in st.session_state and st.session_state.selected_available_model_name is not None:
+            if "selected_model_path" in st.session_state and "selected_available_model_name" in st.session_state and st.session_state.selected_available_model_name is not None:
                 selected_model_path = st.session_state.selected_model_path
                 name = st.session_state.selected_available_model_name
                 st.write(f'## Results for Model: {name}')
@@ -1355,16 +1350,29 @@ elif st.session_state.page == "Models Results":
                         st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
 
 
-                    col1, col2 = st.columns([2, 3])
-                    with col1:
-                        st.write("**Rating Distribution**")
-                        distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
-                        st.image(distrib_img_stream, caption="Rating Distribution")
-                    with col2:
-                        st.write("")
-                        plot_stream = plot_monthly_avg_app(reviews, label=f"predictions_{name}")   
-                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
-                    st.write("#### Word Clouds by Prediction")
+
+                    if not st.session_state.filtered_reviews.empty:
+                        col1, col2 = st.columns([2, 3])
+                        with col1:
+                            st.write("**Rating Distribution**")
+                            distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
+                            st.image(distrib_img_stream, caption="Rating Distribution")
+                        with col2:
+                            st.write("")
+                            plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
+                            st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                        
+                    else:
+                        col1, col2, col3 = st.columns([1, 4, 1])
+                        with col1:
+                            st.write(" ")
+                        with col2:
+                            st.write("**Rating Distribution**")
+                            distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
+                            st.image(distrib_img_stream, caption="Rating Distribution")
+                        with col3:
+                            st.write("")
+
                     try:
                         if "word_clouds_by_prediction" not in st.session_state:
                             st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
@@ -1448,17 +1456,27 @@ elif st.session_state.page == "Models Results":
                         st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
 
 
-                    col1, col2 = st.columns([2, 3])
-                    with col1:
-                        st.write("**Rating Distribution**")
-                        distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
-                        st.image(distrib_img_stream, caption="Rating Distribution")
-                    with col2:
-                        st.write("")
-                        st.write("")
-                        plot_stream = plot_monthly_avg_app(reviews, label=f"predictions_{name}")   
-                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
-                    st.write("##### Word Clouds by Prediction")
+                    if not st.session_state.filtered_reviews.empty:
+                        col1, col2 = st.columns([2, 3])
+                        with col1:
+                            st.write("**Rating Distribution**")
+                            distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
+                            st.image(distrib_img_stream, caption="Rating Distribution")
+                        with col2:
+                            st.write("")
+                            plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
+                            st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                        
+                    else:
+                        col1, col2, col3 = st.columns([1, 4, 1])
+                        with col1:
+                            st.write(" ")
+                        with col2:
+                            st.write("**Rating Distribution**")
+                            distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
+                            st.image(distrib_img_stream, caption="Rating Distribution")
+                        with col3:
+                            st.write("")
                     try:
                         if "word_clouds_by_prediction" not in st.session_state:
                             st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
@@ -1542,16 +1560,29 @@ elif st.session_state.page == "Models Results":
                         st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
 
 
-                    col1, col2 = st.columns([2, 3])
-                    with col1:
-                        st.write("**Rating Distribution**")
-                        distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
-                        st.image(distrib_img_stream, caption="Rating Distribution")
-                    with col2:
-                        st.write("")
-                        st.write("")
-                        plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
-                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+
+                    if not st.session_state.filtered_reviews.empty:
+                        col1, col2 = st.columns([2, 3])
+                        with col1:
+                            st.write("**Rating Distribution**")
+                            distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
+                            st.image(distrib_img_stream, caption="Rating Distribution")
+                        with col2:
+                            st.write("")
+                            plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
+                            st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                        
+                    else:
+                        col1, col2, col3 = st.columns([1, 4, 1])
+                        with col1:
+                            st.write(" ")
+                        with col2:
+                            st.write("**Rating Distribution**")
+                            distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
+                            st.image(distrib_img_stream, caption="Rating Distribution")
+                        with col3:
+                            st.write("")
+
                     st.write("##### Word Clouds by Prediction")
                     try:
                         if "word_clouds_by_prediction" not in st.session_state:
@@ -1578,25 +1609,28 @@ elif st.session_state.page == "Models Results":
 
     if (("rating_column" not in st.session_state or st.session_state.rating_column is None) and ("df_external" in st.session_state)):
         df_external = st.session_state.df_external
-        if st.session_state.predict_on_vader_selected==True:
-                st.write('#### Results for Model: VADER')
-                st.write("")
-                st.write("")
-                st.write("")
+        reviews = st.session_state.df_external
+
+        if "selected_model_path" in st.session_state and "selected_available_model_name" in st.session_state and st.session_state.selected_available_model_name is not None:
+            selected_model_path = st.session_state.selected_model_path
+            name = st.session_state.selected_available_model_name
+            st.write(f'## Results for Model: {name}')
+            if "classification" in selected_model_path or "regression" in selected_model_path or "sentiment_prediction" in selected_model_path:
+                
                 col1, col2, col3 = st.columns([1, 4, 1])
                 with col1:
-                    st.write("")
+                    st.write(" ")
                 with col2:
                     st.write("**Rating Distribution**")
-                    distrib_img_stream = distribiution_of_rating_for_app(df_external, "predictions_vader")
+                    distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
                     st.image(distrib_img_stream, caption="Rating Distribution")
                 with col3:
                     st.write("")
-                st.write("##### Word Clouds by Prediction")
+
                 try:
                     if "word_clouds_by_prediction" not in st.session_state:
-                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(df_external, rating_column="predictions_vader")
-                    records_per_prediction =df_external.groupby("predictions_vader").size().to_dict()
+                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
+                    records_per_prediction = reviews.groupby(f"predictions_{name}").size().to_dict()
                     word_clouds_available = {
                         pred: st.session_state.word_clouds_by_prediction[pred] 
                         for pred in st.session_state.word_clouds_by_prediction
@@ -1612,18 +1646,60 @@ elif st.session_state.page == "Models Results":
                     else:
                         st.warning("No word clouds available for the selected predictions.")
                 except Exception as e:
+                    st.error(f"Error generating word clouds: {e}")                    
+
+
+        if st.session_state.predict_on_vader_selected==True:
+                st.write('#### Results for Model: VADER')
+                st.write("")
+                st.write("")
+                st.write("")
+                col1, col2 = st.columns([3, 2])
+                with col1:
+                    st.write("**Rating Distribution**")
+                    distrib_img_stream = distribiution_of_rating_for_app(df_external, "predictions_vader")
+                    st.image(distrib_img_stream, caption="Rating Distribution")
+                with col2:
+                    st.write("")
+                    st.write("")
+                    st.write("")
+                    st.write(" Jakis tekst tu o vaderze")
+                st.write("##### Word Clouds by Prediction")
+                try:
+                    if "word_clouds_by_prediction_vader" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction_vader = create_tfidf_wordcloud(df_external, rating_column="predictions_vader")
+                    records_per_prediction =df_external.groupby("predictions_vader").size().to_dict()
+                    word_clouds_available_vader = {
+                        pred: st.session_state.word_clouds_by_prediction_vader[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction_vader
+                        if pred in st.session_state.word_clouds_by_prediction_vader
+                    }
+                    unique_predictions = sorted(word_clouds_available_vader.keys())
+                    if unique_predictions:
+                        cols = st.columns(len(unique_predictions))
+                        for i, pred in enumerate(unique_predictions):
+                            with cols[i]:
+                                st.write(f"{pred} Predictions ({records_per_prediction.get(pred, 0)} records)")
+                                st.image(word_clouds_available_vader[pred], caption=f"{pred} Predictions")
+                    else:
+                        st.warning("No word clouds available for the selected predictions.")
+                except Exception as e:
                     st.error(f"Error generating word clouds: {e}")
         if st.session_state.predict_on_roberta_selected==True:
                 st.write('#### Results for Model: RoBERTa')
-                col1, col2, col3 = st.columns([1, 4, 1])
+                st.write("")
+                st.write("")
+                st.write("")
+                col1, col2 = st.columns([3, 2])
                 with col1:
-                    st.write("")
-                with col2:
                     st.write("**Rating Distribution**")
                     distrib_img_stream = distribiution_of_rating_for_app(df_external, "predictions_roberta")
                     st.image(distrib_img_stream, caption="Rating Distribution")
-                with col3:
+                with col2:
                     st.write("")
+                    st.write("")
+                    st.write("")
+                    st.write(" Jakis tekst tu o roberta")
                 st.write("##### Word Clouds by Prediction")
                 try:
                     if "word_clouds_by_prediction" not in st.session_state:
@@ -1646,6 +1722,10 @@ elif st.session_state.page == "Models Results":
                 except Exception as e:
                     st.error(f"Error generating word clouds: {e}")
     
+
+
+
+
     if "filtered_reviews" in st.session_state or "df_external" not in st.session_state:
         if "filtered_reviews" in st.session_state:
             reviews = st.session_state.filtered_reviews
