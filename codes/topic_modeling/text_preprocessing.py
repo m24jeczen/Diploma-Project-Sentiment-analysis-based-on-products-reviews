@@ -5,8 +5,9 @@ from nltk.corpus import stopwords
 from gensim.models import Phrases
 from gensim.corpora import Dictionary
 import spacy
+from collections import Counter
+
 nlp = spacy.load("en_core_web_sm")
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 def remove_numbers(texts):
@@ -45,8 +46,29 @@ def remove_verbs(texts):
         raise
 
 
-def preprocess_text(df, no_below=3, no_above=0.8, with_certain_words_removal=False, 
-                    words_to_remove=None, groupby_column='rating'):
+
+def filter_words_from_texts(texts, no_below, no_above):
+    total_docs = len(texts)
+    
+    # Calculate document frequency (number of documents each word appears in)
+    doc_freq = Counter(word for text in texts for word in set(text))
+    
+    # Filter words based on document frequency
+    filtered_words = {
+        word for word, freq in doc_freq.items()
+        if no_below <= freq <= no_above * total_docs
+    }
+    
+    # Remove words not in the filtered set
+    filtered_texts = [
+        [word for word in text if word in filtered_words]
+        for text in texts
+    ]
+    
+    return filtered_texts
+
+
+def preprocess_text(df, no_below=3, no_above=0.8):
     # no_below : Keep tokens which are contained in at least `no_below` documents
     # no_above : Keep tokens which are contained in no more than `no_above` documents
     #        (fraction of total corpus size, not an absolute number)
@@ -73,18 +95,6 @@ def preprocess_text(df, no_below=3, no_above=0.8, with_certain_words_removal=Fal
             print(f"Exception during tokenization: {e}")
             raise
 
-        texts = remove_numbers(texts)
-
-        try:
-            # Removing 2-letter words
-            texts = [[w for w in text if len(w) > 2] for text in texts]
-            print('--- Two letter words removed ---')
-        except Exception as e:
-            print(f"Exception during removing 2-letter words: {e}")
-            raise
-
-        texts = remove_verbs(texts)
-
         try:
             # Lematization
             lemmatizer = WordNetLemmatizer()
@@ -93,6 +103,23 @@ def preprocess_text(df, no_below=3, no_above=0.8, with_certain_words_removal=Fal
             print('--- Lematization done ---')
         except Exception as e:
             print(f"Exception during lematization: {e}")
+            raise
+
+        texts = remove_numbers(texts)
+
+        try:
+            texts = filter_words_from_texts(texts, no_below, no_above)
+            print('--- Rare and frequent words removed --- ')
+        except Exception as e:
+            print('Exception during ..')
+            raise
+
+        try:
+            # Removing 2-letter words
+            texts = [[w for w in text if len(w) > 2] for text in texts]
+            print('--- Two letter words removed ---')
+        except Exception as e:
+            print(f"Exception during removing 2-letter words: {e}")
             raise
 
         try:
@@ -104,15 +131,6 @@ def preprocess_text(df, no_below=3, no_above=0.8, with_certain_words_removal=Fal
             print(f"Exception during removing stopwords: {e}")
             raise
 
-        if with_certain_words_removal:
-            try:
-                # Removing manually chosen words
-                texts = [[w for w in text if w not in words_to_remove] for text in texts]
-                print('---Choosed words removed---')
-            except Exception as e:
-                print(f"Exception during removing chosen words: {e}")
-                raise
-
         try:
             # Bigrams
             bigram = Phrases(texts, min_count=30)
@@ -121,47 +139,14 @@ def preprocess_text(df, no_below=3, no_above=0.8, with_certain_words_removal=Fal
         except Exception as e:
             print(f"Exception during finding bigrams: {e}")
             raise
-
-        try:
-        # Apply TF-IDF for global word filtering
-            all_text_data = [' '.join(text) for text in texts]
-            global_tfidf = TfidfVectorizer(stop_words='english', max_features=500)
-            global_tfidf_matrix = global_tfidf.fit_transform(all_text_data)
-            feature_names = global_tfidf.get_feature_names_out()
-            global_word_scores = global_tfidf_matrix.sum(axis=0).A1
-            common_words = {word for word, score in zip(feature_names, global_word_scores) if score > 0}
-            texts = [[word for word in text if word not in common_words] for text in texts]
-            print('--- tfidf global done ---')
-
-        except Exception as e:
-            print(f"Exception during global word filtering: {e}")    
-        try:
-            dictionary = Dictionary(texts)
-            dictionary.filter_extremes(no_below, no_above)
-            print('--- Common and rare words removed ---')
-        except Exception as e:
-            print(f"Exception during removing common and rare words: {e}")
  
         try:
-            if groupby_column:
-                grouped_texts = []
-                for _, group in df.groupby(groupby_column):
-                    group_texts = group['text'].astype(str).tolist()
-                    group_texts = [' '.join(tokenizer.tokenize(text.lower())) for text in group_texts]
-                    grouped_texts.extend(group_texts)
-
-                global_tfidf_matrix = global_tfidf.fit_transform(grouped_texts)
-                print('--- tfidf grouped done ---')
-
-        except Exception as e:
-            print(f"Exception during groupby column: {e}")
-        
-        try:
-            # Creating bag of words
+            dictionary = Dictionary(texts)
             texts_bow = [dictionary.doc2bow(text) for text in texts]
             id2token = {id: token for token, id in dictionary.token2id.items()}
             print('--- Preprocessing done ---')
             return texts_bow, dictionary, id2token
+
         except Exception as e:
             print(f"Exception during making bag-of-words: {e}")
             raise

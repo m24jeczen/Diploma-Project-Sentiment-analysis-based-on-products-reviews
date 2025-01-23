@@ -17,7 +17,6 @@ from codes.loading_and_filtering.filter import filter
 from codes.loading_and_filtering.data_loader import *
 from codes.topic_modeling.text_preprocessing import preprocess_text
 from codes.topic_modeling.LDA import LDA_training
-from codes.topic_modeling.visualization import *
 from codes.visualizations import *
 
 from codes.deep_learning.download_model import *
@@ -46,10 +45,11 @@ with open(css_file_path) as f:
 st.markdown(
     """
     <div style="
-        background-color: #141824;
+        background-color: #171A30;
         padding: 20px;
         border-radius: 10px;
         text-align: center;
+        border: 1px solid #F6B17A; /* Add an orange border */
     ">
         <h1 style="color: #F6B17A; font-size: 50px; margin: 0;">
             AMAZON PRODUCTS ANALYSIS
@@ -58,6 +58,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 # The first page is Menu
 if "page" not in st.session_state:
@@ -115,9 +116,6 @@ st.markdown(
 )
 
 
-
-
-
 # Menu Page (Main Entry Point)
 if st.session_state.page == "Menu":
     st.write("")
@@ -167,8 +165,8 @@ if st.session_state.page == "Menu":
             </h2>
             <ul style="text-align: left; max-width: 800px; margin: 0 auto; padding-left: 20px; font-size: 16px;">
                 <li><strong>Filter Products:</strong> Filter Amazon data or upload external data. Choose pre-trained models or train your own with selected hyperparameters. 
-                <span style="color: #E89D60;"><strong>Warning:</strong></span> Returning to this page will reset all filtering, models, and analysis data. After filtering, 
-                you can navigate freely between other pages without losing progress.</li>
+                <span style="color: #E89D60;"><strong>Warning:</strong></span> Returning to this page from Main Menu after training or predicting any models before that, will reset all models' results (The content of Models Results page). 
+                Returning to other pages (Filter Products or Ratings and Words Analysis) from Main Menu will not remove its' results or filtered data.</li>
                 <li><strong>Ratings and Words Analysis:</strong> Explore and analyze ratings (if available) and textual data. Perform LDA topic modeling for deeper insights.</li>
                 <li><strong>Models Results:</strong> Evaluate and inspect the results of your selected or trained models, with detailed performance metrics and insights.</li>
             </ul>
@@ -205,8 +203,7 @@ elif st.session_state.page == "Filter Products":
             df_external.rename(columns={text_column: 'text'}, inplace=True)
 
             st.session_state.text_column = 'text'
-            # if "rating_column" not in st.session_state:
-            #     st.session_state.rating_column = None
+
 
             st.success(f"Text column set to: {text_column}")
             if rating_column:
@@ -487,9 +484,10 @@ elif st.session_state.page == "Filter Products":
                 }
             })
             st.success(f"Added model: {model_name} with parameters.")
-
+        button_name = "Predict"
         # Display selected models and parameters
         if st.session_state.selected_models:
+            button_name = "Train and Predict"
             st.write("### Selected Models")
             for idx, model_info in enumerate(st.session_state.selected_models):
                 st.write(f"{idx + 1}. Model: {model_info['model_name']}")
@@ -499,86 +497,92 @@ elif st.session_state.page == "Filter Products":
         st.write("")
         st.write("")
         if filtered_reviews.empty==False:
-            if st.session_state.selected_models:
-                if st.button("Train and Predict"):
-                    try: 
-                        for idx, model_info in enumerate(st.session_state.selected_models):
-                            name = model_info["parameters"]["localname"]
-                            if model_info["model_name"] == "bert_classification":
-                                model_path = rf".\models\classification\{name}"
-                                filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
-                                with st.spinner(f"Training model {name}..."):    
-                                    train_model(filtered_reviews, 'classification',f'target_{name}',5, **model_info["parameters"])
-                                with st.spinner(f"Predicting on model {name}..."):
-                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)+1
-                                st.success(f"Prediction with {name} completed successfully!")
-                            if model_info["model_name"] == "bert_regression":
-                                model_path = rf".\models\regression\{name}"
-                                filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
-                                with st.spinner(f"Training model {name}..."):    
-                                    train_model(filtered_reviews, 'regression',f'target_{name}',5, **model_info["parameters"])
-                                with st.spinner(f"Predicting on model {name}..."):
-                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
-                                st.success(f"Prediction with {name} completed successfully!")
-                            if model_info["model_name"]=="bert_sentiment_prediction":
-                                model_path = rf".\models\sentiment_prediction\{name}"
-                                with st.spinner(f"Training model {name}..."):    
-                                    train_model(filtered_reviews,target="star_based_sentiment",num_classes=2, **model_info["parameters"])
-                                with st.spinner(f"Predicting on model {name}..."):
-                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
-                                st.success(f"Prediction with {name} completed successfully!")
-                            
-
-                    except Exception as e:
-                        st.error(f"An error occurred during training and predicting: {e}")
-            
             if (
-                ("selected_model_path" in st.session_state and st.session_state.selected_model_path is not None) or
-                st.session_state.get("predict_on_roberta_selected", False) or
-                st.session_state.get("predict_on_vader_selected", False)
+                (st.session_state.selected_models) or ("selected_model_path" in st.session_state and st.session_state.selected_model_path is not None) or
+                    st.session_state.get("predict_on_roberta_selected", False) or
+                    st.session_state.get("predict_on_vader_selected", False)
             ):
-                if st.button("Predict"):
-                    if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
-                        try:
-                            selected_model_path = st.session_state.selected_model_path
-                            name = st.session_state.selected_available_model_name
-                            if "classification" in selected_model_path:
-                                filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
-                                with st.spinner(f"Predicting on pre-trained model {name}..."):
-                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)+1
-                                st.success("Prediction completed successfully!")
+                if st.button(button_name):
+                    if st.session_state.selected_models:
+                        try: 
+                            for idx, model_info in enumerate(st.session_state.selected_models):
+                                name = model_info["parameters"]["localname"]
+                                if model_info["model_name"] == "bert_classification":
+                                    model_path = rf".\models\classification\{name}"
+                                    filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
+                                    with st.spinner(f"Training model {name}..."):    
+                                        train_model(filtered_reviews, 'classification',f'target_{name}',5, **model_info["parameters"])
+                                    with st.spinner(f"Predicting on model {name}..."):
+                                        filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)+1
+                                    st.success(f"Prediction with {name} completed successfully!")
+                                if model_info["model_name"] == "bert_regression":
+                                    model_path = rf".\models\regression\{name}"
+                                    filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
+                                    with st.spinner(f"Training model {name}..."):    
+                                        train_model(filtered_reviews, 'regression',f'target_{name}',5, **model_info["parameters"])
+                                    with st.spinner(f"Predicting on model {name}..."):
+                                        filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
+                                    st.success(f"Prediction with {name} completed successfully!")
+                                if model_info["model_name"]=="bert_sentiment_prediction":
+                                    model_path = rf".\models\sentiment_prediction\{name}"
+                                    with st.spinner(f"Training model {name}..."):    
+                                        train_model(filtered_reviews,target="star_based_sentiment",num_classes=2, **model_info["parameters"])
+                                    with st.spinner(f"Predicting on model {name}..."):
+                                        filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
+                                    st.success(f"Prediction with {name} completed successfully!")
+                                
 
-                            elif "regression" in selected_model_path:
-                                filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
-                                with st.spinner(f"Predicting on pre-trained model {name}..."):
-                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)
-                                st.success("Prediction completed successfully!")
-                            elif "sentiment_prediction" in selected_model_path:
-                                with st.spinner(f"Predicting on pre-trained model {name}..."):
-                                    filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)
-                                st.success("Prediction completed successfully!")
-                            
                         except Exception as e:
-                            st.error(f"An error occurred while predicting: {e}")
-                    
-                    
-                    if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
-                        try: 
-                            with st.spinner("Predicting on RoBERTa..."):
-                                filtered_reviews["predictions_roberta"] = predict_on_roberta(filtered_reviews)
-                                st.success("Prediction on RoBERTa completed successfully!")
-                        except Exception as e:  
-                            st.error(f"An error occurred while predicting on RoBERTa: {e}")
+                            st.error(f"An error occurred during training and predicting: {e}")
+                
+                    if (
+                        ("selected_model_path" in st.session_state and st.session_state.selected_model_path is not None) or
+                        st.session_state.get("predict_on_roberta_selected", False) or
+                        st.session_state.get("predict_on_vader_selected", False)
+                    ):
+                        if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
+                            try:
+                                selected_model_path = st.session_state.selected_model_path
+                                name = st.session_state.selected_available_model_name
+                                if "classification" in selected_model_path:
+                                    filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
+                                    with st.spinner(f"Predicting on pre-trained model {name}..."):
+                                        filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)+1
+                                    st.success("Prediction completed successfully!")
 
-                    if st.session_state.predict_on_vader_selected:
-                        try: 
-                            with st.spinner("Predicting on VADER..."):
-                                filtered_reviews["predictions_vader"] = predict_on_vader(filtered_reviews)
-                                st.success("Prediction on VADER completed successfully!")
-                        except Exception as e:  
-                            st.error(f"An error occurred while predicting on VADER: {e}")
+                                elif "regression" in selected_model_path:
+                                    filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
+                                    with st.spinner(f"Predicting on pre-trained model {name}..."):
+                                        filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)
+                                    st.success("Prediction completed successfully!")
+                                elif "sentiment_prediction" in selected_model_path:
+                                    with st.spinner(f"Predicting on pre-trained model {name}..."):
+                                        filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,selected_model_path)
+                                    st.success("Prediction completed successfully!")
+                                
+                            except Exception as e:
+                                st.error(f"An error occurred while predicting: {e}")
+                        
+                        
+                        if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
+                            try: 
+                                with st.spinner("Predicting on RoBERTa..."):
+                                    filtered_reviews["predictions_roberta"] = predict_on_roberta(filtered_reviews)
+                                    st.success("Prediction on RoBERTa completed successfully!")
+                            except Exception as e:  
+                                st.error(f"An error occurred while predicting on RoBERTa: {e}")
+
+                        if st.session_state.predict_on_vader_selected:
+                            try: 
+                                with st.spinner("Predicting on VADER..."):
+                                    filtered_reviews["predictions_vader"] = predict_on_vader(filtered_reviews)
+                                    st.success("Prediction on VADER completed successfully!")
+                            except Exception as e:  
+                                st.error(f"An error occurred while predicting on VADER: {e}")
+            else:
+                st.info('In order to predict or train a model, you have to choose it first. If you only want to analize the text data (or rating) you can go back to Menu and proceed to ratings and words analysis page')
         else:
-            st.warning('You have to filter data before training and predicting.')
+            st.warning('You have to filter data before training and predicting. Without filtering you will not see any results in ratings and words analysis page as well.')
 
         st.write("")
         st.write("")
@@ -634,14 +638,14 @@ elif st.session_state.page == "Ratings and words analysis":
 
         st.write("#### Rating Distribution and Trends")
         try:
-            cols = st.columns(2)
+            col1, col2 = st.columns([2, 3])
             
-            with cols[0]:
+            with col1:
                 st.write("**Rating Distribution**")
                 distrib_img_stream = distribiution_of_rating_for_app(reviews)
                 st.image(distrib_img_stream, caption="Rating Distribution")
 
-            with cols[1]:
+            with col2:
                 if "df_external" in st.session_state:
                     st.write('')
                 else:
@@ -674,8 +678,8 @@ elif st.session_state.page == "Ratings and words analysis":
             with st.form("lda_parameters_form"):
                 n_topics = st.number_input("Number of Topics", min_value=1, max_value=20, value=9, step=1)
                 chunksize = st.number_input("Chunksize", min_value=10, max_value=5000, value=1000, step=10)
-                passes = st.number_input("Number of Passes", min_value=1, max_value=100, value=10, step=1)
-                iterations = st.number_input("Iterations", min_value=10, max_value=500, value=200, step=10)
+                passes = st.number_input("Number of Passes", min_value=1, max_value=100, value=3, step=1)
+                iterations = st.number_input("Iterations", min_value=10, max_value=500, value=150, step=10)
                 update_every = st.selectbox("Update Every", options=[1, 0], index=0)
                 submit_button = st.form_submit_button("Perform LDA Analysis")
 
@@ -742,8 +746,11 @@ elif st.session_state.page == "Ratings and words analysis":
                         st.session_state.selected_topic_id = topic_id 
 
             with cols[1]:
-                if 'selected_topic_id' in st.session_state:
+                if 'selected_topic_id' in st.session_state and st.session_state.selected_topic_id is not None:
                     display_topic_words(st.session_state.selected_topic_id, st.session_state.topic_word_menu)
+                else:
+                    display_topic_words(0, st.session_state.topic_word_menu)
+
 
             with cols[2]:
                 st.image(st.session_state.review_topic_matrix, caption="Review-Topic Matrix Heatmap")
@@ -863,15 +870,26 @@ elif st.session_state.page == "Models Results":
                                 st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                             st.write("#### Word Clouds by Prediction")
                             try:
-                                if "word_clouds_by_prediction" not in st.session_state:
-                                    st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                                # Dynamically construct the session state variable name
+                                word_cloud_key = f"word_clouds_by_prediction_{name}"
+                                
+                                # Check if the variable already exists in session state
+                                if word_cloud_key not in st.session_state:
+                                    st.session_state[word_cloud_key] = create_tfidf_wordcloud(
+                                        filtered_reviews, 
+                                        rating_column=f"predictions_{name}"
+                                    )
+                                
+                                # Access the word cloud data dynamically
+                                word_clouds_by_prediction = st.session_state[word_cloud_key]
                                 records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                                 word_clouds_available = {
-                                    pred: st.session_state.word_clouds_by_prediction[pred] 
-                                    for pred in st.session_state.word_clouds_by_prediction
-                                    if pred in st.session_state.word_clouds_by_prediction
+                                    pred: word_clouds_by_prediction[pred] 
+                                    for pred in word_clouds_by_prediction
+                                    if pred in word_clouds_by_prediction
                                 }
                                 unique_predictions = sorted(word_clouds_available.keys())
+                                
                                 if unique_predictions:
                                     cols = st.columns(len(unique_predictions))
                                     for i, pred in enumerate(unique_predictions):
@@ -882,6 +900,7 @@ elif st.session_state.page == "Models Results":
                                     st.warning("No word clouds available for the selected predictions.")
                             except Exception as e:
                                 st.error(f"Error generating word clouds: {e}")
+
                             
                         if model_info["model_name"] == "bert_regression":
 
@@ -957,15 +976,26 @@ elif st.session_state.page == "Models Results":
                                 st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                             st.write("##### Word Clouds by Prediction")
                             try:
-                                if "word_clouds_by_prediction" not in st.session_state:
-                                    st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                                # Dynamically construct the session state variable name
+                                word_cloud_key = f"word_clouds_by_prediction_{name}"
+                                
+                                # Check if the variable already exists in session state
+                                if word_cloud_key not in st.session_state:
+                                    st.session_state[word_cloud_key] = create_tfidf_wordcloud(
+                                        filtered_reviews, 
+                                        rating_column=f"predictions_{name}"
+                                    )
+                                
+                                # Access the word cloud data dynamically
+                                word_clouds_by_prediction = st.session_state[word_cloud_key]
                                 records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                                 word_clouds_available = {
-                                    pred: st.session_state.word_clouds_by_prediction[pred] 
-                                    for pred in st.session_state.word_clouds_by_prediction
-                                    if pred in st.session_state.word_clouds_by_prediction
+                                    pred: word_clouds_by_prediction[pred] 
+                                    for pred in word_clouds_by_prediction
+                                    if pred in word_clouds_by_prediction
                                 }
                                 unique_predictions = sorted(word_clouds_available.keys())
+                                
                                 if unique_predictions:
                                     cols = st.columns(len(unique_predictions))
                                     for i, pred in enumerate(unique_predictions):
@@ -1050,15 +1080,26 @@ elif st.session_state.page == "Models Results":
                                 st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                             st.write("##### Word Clouds by Prediction")
                             try:
-                                if "word_clouds_by_prediction" not in st.session_state:
-                                    st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                                # Dynamically construct the session state variable name
+                                word_cloud_key = f"word_clouds_by_prediction_{name}"
+                                
+                                # Check if the variable already exists in session state
+                                if word_cloud_key not in st.session_state:
+                                    st.session_state[word_cloud_key] = create_tfidf_wordcloud(
+                                        filtered_reviews, 
+                                        rating_column=f"predictions_{name}"
+                                    )
+                                
+                                # Access the word cloud data dynamically
+                                word_clouds_by_prediction = st.session_state[word_cloud_key]
                                 records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                                 word_clouds_available = {
-                                    pred: st.session_state.word_clouds_by_prediction[pred] 
-                                    for pred in st.session_state.word_clouds_by_prediction
-                                    if pred in st.session_state.word_clouds_by_prediction
+                                    pred: word_clouds_by_prediction[pred] 
+                                    for pred in word_clouds_by_prediction
+                                    if pred in word_clouds_by_prediction
                                 }
                                 unique_predictions = sorted(word_clouds_available.keys())
+                                
                                 if unique_predictions:
                                     cols = st.columns(len(unique_predictions))
                                     for i, pred in enumerate(unique_predictions):
@@ -1068,7 +1109,7 @@ elif st.session_state.page == "Models Results":
                                 else:
                                     st.warning("No word clouds available for the selected predictions.")
                             except Exception as e:
-                                st.error(f"Error generating word clouds: {e}")                            
+                                st.error(f"Error generating word clouds: {e}")                          
 
             else: 
                 reviews = st.session_state.df_external
@@ -1156,13 +1197,13 @@ elif st.session_state.page == "Models Results":
                         st.write("")
                 st.write("##### Word Clouds by Prediction")
                 try:
-                    if "word_clouds_by_prediction" not in st.session_state:
-                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column="predictions_roberta")
+                    if "word_clouds_by_prediction_roberta" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction_roberta = create_tfidf_wordcloud(reviews, rating_column="predictions_roberta")
                     records_per_prediction = reviews.groupby("predictions_roberta").size().to_dict()
                     word_clouds_available = {
-                        pred: st.session_state.word_clouds_by_prediction[pred] 
-                        for pred in st.session_state.word_clouds_by_prediction
-                        if pred in st.session_state.word_clouds_by_prediction
+                        pred: st.session_state.word_clouds_by_prediction_roberta[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction_roberta
+                        if pred in st.session_state.word_clouds_by_prediction_roberta
                     }
                     unique_predictions = sorted(word_clouds_available.keys())
                     if unique_predictions:
@@ -1262,13 +1303,13 @@ elif st.session_state.page == "Models Results":
                         st.write("")
                 st.write("##### Word Clouds by Prediction")
                 try:
-                    if "word_clouds_by_prediction" not in st.session_state:
-                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column="predictions_vader")
+                    if "word_clouds_by_prediction_vader" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction_vader = create_tfidf_wordcloud(reviews, rating_column="predictions_vader")
                     records_per_prediction = reviews.groupby("predictions_vader").size().to_dict()
                     word_clouds_available = {
-                        pred: st.session_state.word_clouds_by_prediction[pred] 
-                        for pred in st.session_state.word_clouds_by_prediction
-                        if pred in st.session_state.word_clouds_by_prediction
+                        pred: st.session_state.word_clouds_by_prediction_vader[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction_vader
+                        if pred in st.session_state.word_clouds_by_prediction_vader
                     }
                     unique_predictions = sorted(word_clouds_available.keys())
                     if unique_predictions:
@@ -1374,13 +1415,13 @@ elif st.session_state.page == "Models Results":
                             st.write("")
 
                     try:
-                        if "word_clouds_by_prediction" not in st.session_state:
-                            st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
+                        if "word_clouds_by_prediction_class" not in st.session_state:
+                            st.session_state.word_clouds_by_prediction_class = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
                         records_per_prediction = reviews.groupby(f"predictions_{name}").size().to_dict()
                         word_clouds_available = {
-                            pred: st.session_state.word_clouds_by_prediction[pred] 
-                            for pred in st.session_state.word_clouds_by_prediction
-                            if pred in st.session_state.word_clouds_by_prediction
+                            pred: st.session_state.word_clouds_by_prediction_class[pred] 
+                            for pred in st.session_state.word_clouds_by_prediction_class
+                            if pred in st.session_state.word_clouds_by_prediction_class
                         }
                         unique_predictions = sorted(word_clouds_available.keys())
                         if unique_predictions:
@@ -1478,13 +1519,13 @@ elif st.session_state.page == "Models Results":
                         with col3:
                             st.write("")
                     try:
-                        if "word_clouds_by_prediction" not in st.session_state:
-                            st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
+                        if "word_clouds_by_prediction_regr" not in st.session_state:
+                            st.session_state.word_clouds_by_prediction_regr = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
                         records_per_prediction = reviews.groupby(f"predictions_{name}").size().to_dict()
                         word_clouds_available = {
-                            pred: st.session_state.word_clouds_by_prediction[pred] 
-                            for pred in st.session_state.word_clouds_by_prediction
-                            if pred in st.session_state.word_clouds_by_prediction
+                            pred: st.session_state.word_clouds_by_prediction_regr[pred] 
+                            for pred in st.session_state.word_clouds_by_prediction_regr
+                            if pred in st.session_state.word_clouds_by_prediction_regr
                         }
                         unique_predictions = sorted(word_clouds_available.keys())
                         if unique_predictions:
@@ -1585,13 +1626,13 @@ elif st.session_state.page == "Models Results":
 
                     st.write("##### Word Clouds by Prediction")
                     try:
-                        if "word_clouds_by_prediction" not in st.session_state:
+                        if "word_clouds_by_prediction_sent" not in st.session_state:
                             st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
                         records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                         word_clouds_available = {
-                            pred: st.session_state.word_clouds_by_prediction[pred] 
-                            for pred in st.session_state.word_clouds_by_prediction
-                            if pred in st.session_state.word_clouds_by_prediction
+                            pred: st.session_state.word_clouds_by_prediction_sent[pred] 
+                            for pred in st.session_state.word_clouds_by_prediction_sent
+                            if pred in st.session_state.word_clouds_by_prediction_sent
                         }
                         unique_predictions = sorted(word_clouds_available.keys())
                         if unique_predictions:
@@ -1628,13 +1669,13 @@ elif st.session_state.page == "Models Results":
                     st.write("")
 
                 try:
-                    if "word_clouds_by_prediction" not in st.session_state:
-                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
+                    if "word_clouds_by_prediction_2" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction_2 = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
                     records_per_prediction = reviews.groupby(f"predictions_{name}").size().to_dict()
                     word_clouds_available = {
-                        pred: st.session_state.word_clouds_by_prediction[pred] 
-                        for pred in st.session_state.word_clouds_by_prediction
-                        if pred in st.session_state.word_clouds_by_prediction
+                        pred: st.session_state.word_clouds_by_prediction_2[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction_2
+                        if pred in st.session_state.word_clouds_by_prediction_2
                     }
                     unique_predictions = sorted(word_clouds_available.keys())
                     if unique_predictions:
@@ -1666,13 +1707,13 @@ elif st.session_state.page == "Models Results":
                     st.write(" Jakis tekst tu o vaderze")
                 st.write("##### Word Clouds by Prediction")
                 try:
-                    if "word_clouds_by_prediction_vader" not in st.session_state:
+                    if "word_clouds_by_prediction_vader_2" not in st.session_state:
                         st.session_state.word_clouds_by_prediction_vader = create_tfidf_wordcloud(df_external, rating_column="predictions_vader")
                     records_per_prediction =df_external.groupby("predictions_vader").size().to_dict()
                     word_clouds_available_vader = {
-                        pred: st.session_state.word_clouds_by_prediction_vader[pred] 
-                        for pred in st.session_state.word_clouds_by_prediction_vader
-                        if pred in st.session_state.word_clouds_by_prediction_vader
+                        pred: st.session_state.word_clouds_by_prediction_vader_2[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction_vader_2
+                        if pred in st.session_state.word_clouds_by_prediction_vader_2
                     }
                     unique_predictions = sorted(word_clouds_available_vader.keys())
                     if unique_predictions:
@@ -1702,13 +1743,13 @@ elif st.session_state.page == "Models Results":
                     st.write(" Jakis tekst tu o roberta")
                 st.write("##### Word Clouds by Prediction")
                 try:
-                    if "word_clouds_by_prediction" not in st.session_state:
-                        st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(df_external, rating_column="predictions_roberta")
+                    if "word_clouds_by_prediction_roberta_2" not in st.session_state:
+                        st.session_state.word_clouds_by_prediction_roberta_2 = create_tfidf_wordcloud(df_external, rating_column="predictions_roberta")
                     records_per_prediction =df_external.groupby("predictions_roberta").size().to_dict()
                     word_clouds_available = {
-                        pred: st.session_state.word_clouds_by_prediction[pred] 
-                        for pred in st.session_state.word_clouds_by_prediction
-                        if pred in st.session_state.word_clouds_by_prediction
+                        pred: st.session_state.word_clouds_by_prediction_roberta_2[pred] 
+                        for pred in st.session_state.word_clouds_by_prediction_roberta_2
+                        if pred in st.session_state.word_clouds_by_prediction_roberta_2
                     }
                     unique_predictions = sorted(word_clouds_available.keys())
                     if unique_predictions:
