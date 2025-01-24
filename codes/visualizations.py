@@ -272,7 +272,7 @@ def create_review_topic_matrix_stars_for_app_new_2(df, lda_model, texts_bow, n_t
     plt.setp(colorbar.ax.yaxis.get_majorticklabels(), color=text_color)
 
     # Customizing the heatmap's appearance to match the app theme
-    plt.title("Review-Topic Matrix Heatmap", color=text_color)
+    plt.title("Rating-Topic Matrix Heatmap", color=text_color)
     plt.xlabel("Topics", color=text_color)
     plt.ylabel("Ratings", color=text_color)
 

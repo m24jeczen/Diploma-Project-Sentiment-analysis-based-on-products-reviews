@@ -1069,14 +1069,14 @@ elif st.session_state.page == "Models Results":
 
                             col1, col2 = st.columns([2, 3])
                             with col1:
-                                st.write("**Rating Distribution**")
+                                st.write("**Label Distribution**")
                                 distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
-                                st.image(distrib_img_stream, caption="Rating Distribution")
+                                st.image(distrib_img_stream, caption="Label Distribution")
                             with col2:
                                 st.write("")
                                 st.write("")
                                 plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
-                                st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                                st.image(plot_stream, caption="Monthly Average Label", use_container_width=True)
                             st.write("##### Word Clouds by Prediction")
                             try:
                                 # Dynamically construct the session state variable name
@@ -1178,20 +1178,20 @@ elif st.session_state.page == "Models Results":
                 if not st.session_state.filtered_reviews.empty:
                     col1, col2 = st.columns([2, 3])
                     with col1:
-                        st.write("**Rating Distribution**")
+                        st.write("**Label Distribution**")
                         distrib_img_stream = distribiution_of_rating_for_app(reviews, "predictions_roberta")
-                        st.image(distrib_img_stream, caption="Rating Distribution")
+                        st.image(distrib_img_stream, caption="Label Distribution")
                     with col2:
                         plot_stream = plot_monthly_avg_app(reviews, label="predictions_roberta")   
-                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                        st.image(plot_stream, caption="Monthly Average Label", use_container_width=True)
                 else:
                     col1, col2, col3 = st.columns([1, 4, 1])
                     with col1:
                          st.write(" ")
                     with col2:
-                        st.write("**Rating Distribution**")
+                        st.write("**Label Distribution**")
                         distrib_img_stream = distribiution_of_rating_for_app(reviews, "predictions_roberta")
-                        st.image(distrib_img_stream, caption="Rating Distribution")
+                        st.image(distrib_img_stream, caption="Label Distribution")
                     with col3:
                         st.write("")
                 st.write("##### Word Clouds by Prediction")
@@ -1282,22 +1282,22 @@ elif st.session_state.page == "Models Results":
                 if not st.session_state.filtered_reviews.empty:
                     col1, col2 = st.columns([2, 3])
                     with col1:
-                        st.write("**Rating Distribution**")
+                        st.write("**Label Distribution**")
                         distrib_img_stream = distribiution_of_rating_for_app(reviews, "predictions_vader")
-                        st.image(distrib_img_stream, caption="Rating Distribution")
+                        st.image(distrib_img_stream, caption="Label Distribution")
                     with col2:
                         st.write("")
                         plot_stream = plot_monthly_avg_app(filtered_reviews, label="predictions_vader")   
-                        st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                        st.image(plot_stream, caption="Monthly Average Label", use_container_width=True)
                     
                 else:
                     col1, col2, col3 = st.columns([1, 4, 1])
                     with col1:
                          st.write(" ")
                     with col2:
-                        st.write("**Rating Distribution**")
+                        st.write("**Label Distribution**")
                         distrib_img_stream = distribiution_of_rating_for_app(reviews, "predictions_vader")
-                        st.image(distrib_img_stream, caption="Rating Distribution")
+                        st.image(distrib_img_stream, caption="Label Distribution")
                     with col3:
                         st.write("")
                 st.write("##### Word Clouds by Prediction")
@@ -1604,22 +1604,22 @@ elif st.session_state.page == "Models Results":
                     if not st.session_state.filtered_reviews.empty:
                         col1, col2 = st.columns([2, 3])
                         with col1:
-                            st.write("**Rating Distribution**")
+                            st.write("**Label Distribution**")
                             distrib_img_stream = distribiution_of_rating_for_app(filtered_reviews, f"predictions_{name}")
-                            st.image(distrib_img_stream, caption="Rating Distribution")
+                            st.image(distrib_img_stream, caption="Label Distribution")
                         with col2:
                             st.write("")
                             plot_stream = plot_monthly_avg_app(filtered_reviews, label=f"predictions_{name}")   
-                            st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
+                            st.image(plot_stream, caption="Monthly Average Label", use_container_width=True)
                         
                     else:
                         col1, col2, col3 = st.columns([1, 4, 1])
                         with col1:
                             st.write(" ")
                         with col2:
-                            st.write("**Rating Distribution**")
+                            st.write("**Label Distribution**")
                             distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
-                            st.image(distrib_img_stream, caption="Rating Distribution")
+                            st.image(distrib_img_stream, caption="Label Distribution")
                         with col3:
                             st.write("")
 
@@ -1661,9 +1661,9 @@ elif st.session_state.page == "Models Results":
                 with col1:
                     st.write(" ")
                 with col2:
-                    st.write("**Rating Distribution**")
+                    st.write("**Label Distribution**")
                     distrib_img_stream = distribiution_of_rating_for_app(reviews, f"predictions_{name}")
-                    st.image(distrib_img_stream, caption="Rating Distribution")
+                    st.image(distrib_img_stream, caption="Label Distribution")
                 with col3:
                     st.write("")
 
@@ -1696,9 +1696,9 @@ elif st.session_state.page == "Models Results":
                 st.write("")
                 col1, col2 = st.columns([3, 2])
                 with col1:
-                    st.write("**Rating Distribution**")
+                    st.write("**Label Distribution**")
                     distrib_img_stream = distribiution_of_rating_for_app(df_external, "predictions_vader")
-                    st.image(distrib_img_stream, caption="Rating Distribution")
+                    st.image(distrib_img_stream, caption="Label Distribution")
                 with col2:
                     st.write("")
                     st.write("")
@@ -1731,9 +1731,9 @@ elif st.session_state.page == "Models Results":
                 st.write("")
                 col1, col2 = st.columns([3, 2])
                 with col1:
-                    st.write("**Rating Distribution**")
+                    st.write("**Label Distribution**")
                     distrib_img_stream = distribiution_of_rating_for_app(df_external, "predictions_roberta")
-                    st.image(distrib_img_stream, caption="Rating Distribution")
+                    st.image(distrib_img_stream, caption="Label Distribution")
                 with col2:
                     st.write("")
                     st.write("")
