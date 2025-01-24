@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, accuracy_score, f1_score
 from io import BytesIO
 import matplotlib
+import re 
 
 
 def calculate_metrics(df, label_col='label', prediction_col='prediction'):
@@ -28,15 +29,15 @@ def calculate_metrics(df, label_col='label', prediction_col='prediction'):
         ), 5)
 
         metrics_per_label.append({
-            'label': label,
-            'accuracy': label_accuracy,
-            'f1_score': label_f1,
-            'mae': mae_for_label
+            'Label': label,
+            'Accuracy': label_accuracy,
+            'F-score': label_f1,
+            'MAE': mae_for_label
         })
 
     # Convert metrics to DataFrame and round values
-    metrics_df = pd.DataFrame(metrics_per_label).round(5)
-
+    metrics_df = pd.DataFrame(metrics_per_label).round(3).sort_values(by='Label')
+    metrics_df = metrics_df.reset_index(drop=True)
     return {
         'MAE': mae,
         'Average Accuracy': avg_accuracy,
@@ -46,6 +47,10 @@ def calculate_metrics(df, label_col='label', prediction_col='prediction'):
 
 
 def heatmap(df, column1, column2):
+
+    fixed1 = column1.replace("_", " ").capitalize()
+    fixed2 = column2.replace("_", " ").capitalize()
+
     # Creating a cross-tabulation for the heatmap
     cross_tab = pd.crosstab(df[column1], df[column2])
 
@@ -78,9 +83,9 @@ def heatmap(df, column1, column2):
     plt.setp(colorbar.ax.yaxis.get_majorticklabels(), color=text_color)
 
     # Customizing the heatmap's appearance to match the app theme
-    plt.title("Heatmap of Correlation Between True Values and Predictions", color=text_color)
-    plt.xlabel(column2, color=text_color)
-    plt.ylabel(column1, color=text_color)
+    plt.title("Confusion Matrix of True Values and Predictions", color=text_color)
+    plt.xlabel(fixed2, color=text_color)
+    plt.ylabel(fixed1, color=text_color)
 
     # Set axis label colors
     ax.tick_params(colors=text_color)
