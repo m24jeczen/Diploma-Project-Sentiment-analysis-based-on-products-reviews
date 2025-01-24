@@ -1626,7 +1626,7 @@ elif st.session_state.page == "Models Results":
                     st.write("##### Word Clouds by Prediction")
                     try:
                         if "word_clouds_by_prediction_sent" not in st.session_state:
-                            st.session_state.word_clouds_by_prediction = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
+                            st.session_state.word_clouds_by_prediction_sent = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
                         records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                         word_clouds_available = {
                             pred: st.session_state.word_clouds_by_prediction_sent[pred] 
