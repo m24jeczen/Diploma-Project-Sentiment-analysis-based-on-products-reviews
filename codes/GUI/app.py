@@ -129,7 +129,7 @@ if st.session_state.page == "Menu":
             st.session_state.page = "Filter Products"
             st.rerun()
 
-        if st.button("Go to ratings and words analysis"):
+        if st.button("Go to Ratings and Words Analysis"):
             st.session_state.page = "Ratings and words analysis"
             st.rerun()
 
@@ -331,7 +331,7 @@ elif st.session_state.page == "Filter Products":
             st.rerun()
 
     else:
-        st.write("## Using local data")
+        st.write("## Using Amazon data")
         if "filtered_reviews" not in st.session_state:
             st.session_state.filtered_reviews = pd.DataFrame()      
         cols = st.columns([3, 5])  
