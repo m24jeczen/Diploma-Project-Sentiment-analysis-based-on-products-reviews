@@ -208,8 +208,8 @@ elif st.session_state.page == "Filter Products":
             if rating_column:
                 positive_threshold = st.radio(
                     "Select the positive threshold for ratings:", 
-                    options=[3, 4], 
-                    index=1  # Default to 4
+                    options=[2,3,4,5], 
+                    index=2  # Default to 4
                 )
                 st.success(f"Rating column set to: {rating_column}")
                 df_external.rename(columns={rating_column: 'rating'}, inplace=True)
@@ -353,8 +353,8 @@ elif st.session_state.page == "Filter Products":
             min_average_rating = st.slider("Minimal average rating of product:", 1.0, 5.0, 1.0)
             positive_threshold = st.radio(
                 "Select the positive threshold for ratings:", 
-                options=[3, 4], 
-                index=1  # Default to 4
+                options=[2,3,4,5], 
+                index=2  # Default to 4
             )
             search_value = st.text_input("Filter products by name (optional)")
 
