@@ -284,9 +284,15 @@ elif st.session_state.page == "Filter Products":
             if "selected_model_path" in st.session_state and st.session_state.selected_model_path is not None:
                 try:
                     name = st.session_state.selected_available_model_name
-                    with st.spinner(f"Predicting on {name} using the chosen pre-trained model..."):
-                        df_external[f"predictions_{name}"] = predict_on_tuned_model(df_external, st.session_state.selected_model_path)
-                        st.success("Prediction completed successfully!")
+                    selected_model_path = st.session_state.selected_model_path
+                    if "classification" in selected_model_path:
+                        with st.spinner(f"Predicting on {name} using the chosen pre-trained model..."):
+                            df_external[f"predictions_{name}"] = predict_on_tuned_model(df_external, st.session_state.selected_model_path) + 1
+                            st.success("Prediction completed successfully!")
+                    else:
+                        with st.spinner(f"Predicting on {name} using the chosen pre-trained model..."):
+                            df_external[f"predictions_{name}"] = predict_on_tuned_model(df_external, st.session_state.selected_model_path)
+                            st.success("Prediction completed successfully!")
                 except Exception as e:
                     st.error(f"An error occurred while predicting: {e}")
 
