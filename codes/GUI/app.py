@@ -1703,7 +1703,6 @@ elif st.session_state.page == "Models Results":
                     st.write("")
                     st.write("")
                     st.write("")
-                    st.write(" Jakis tekst tu o vaderze")
                 st.write("##### Word Clouds by Prediction")
                 try:
                     if "word_clouds_by_prediction_vader_2" not in st.session_state:
@@ -1739,7 +1738,6 @@ elif st.session_state.page == "Models Results":
                     st.write("")
                     st.write("")
                     st.write("")
-                    st.write(" Jakis tekst tu o roberta")
                 st.write("##### Word Clouds by Prediction")
                 try:
                     if "word_clouds_by_prediction_roberta_2" not in st.session_state:
