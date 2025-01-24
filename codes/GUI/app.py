@@ -460,7 +460,7 @@ elif st.session_state.page == "Filter Products":
         max_epochs = st.number_input("Max Epochs", min_value=1, value=3, step=1, key="max_epochs")
         batch_size = st.number_input("Batch Size", min_value=1, value=16, step=1, key="batch_size")
         lr = st.number_input("Learning Rate", min_value=1e-6, value=2e-5, step=1e-6, format="%e", key="lr")
-        max_len = st.number_input("Max Length", min_value=1, value=128, step=1, key="max_len")
+        max_len = st.number_input("Max Number of Tokens", min_value=1, value=128, step=1, key="max_len")
         val_split = st.slider("Validation Split", min_value=0.0, max_value=1.0, value=0.2, step=0.01, key="val_split")
         localname = st.text_input("Model name", value='model_new',key="localname")
         early_stopping = st.checkbox("Enable Early Stopping", value=True, key="early_stopping")
