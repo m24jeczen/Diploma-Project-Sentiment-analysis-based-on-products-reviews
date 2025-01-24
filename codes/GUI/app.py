@@ -150,15 +150,14 @@ if st.session_state.page == "Menu":
                 Welcome to the Amazon Products Analysis App!
             </h1>
             <p style="font-size: 18px; margin-bottom: 20px;">
-                This interactive application provides powerful tools to analyze Amazon product reviews using 
+                This interactive application provides powerful tools to analyze Amazon product reviews or reviews provided by you, using 
                 advanced Natural Language Processing (NLP) and machine learning. Here's what you can do:
             </p>
             <ul style="text-align: left; max-width: 800px; margin: 0 auto; padding-left: 20px; font-size: 16px;">
-                <li><strong>Filter and Explore Reviews:</strong> Load and filter review data based on criteria like rating, review length, date range, and product categories.</li>
+                <li><strong>Filter and Explore Reviews:</strong> Load and filter review data from Amazon based on criteria like rating, review length, date range, and product categories.</li>
                 <li><strong>Analyze Ratings and Trends:</strong> Visualize rating distributions, trends, and create insightful word clouds segmented by rating.</li>
-                <li><strong>Model Predictions:</strong> Train and evaluate machine learning models for sentiment analysis, rating prediction, and more using your data or pre-trained models.</li>
+                <li><strong>Model Predictions:</strong> Train and evaluate machine learning models for sentiment analysis, rating prediction, and more, or predict using pre-trained available models.</li>
                 <li><strong>Topic Modeling:</strong> Discover topics from reviews using Latent Dirichlet Allocation (LDA).</li>
-                <li><strong>Custom Models:</strong> Configure and train models with adjustable parameters for specific predictions.</li>
             </ul>
             <h2 style="color: #F6B17A; font-size: 24px; margin-top: 30px;">
                 Navigation Guide
