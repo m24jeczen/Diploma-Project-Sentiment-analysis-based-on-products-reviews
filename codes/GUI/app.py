@@ -1547,7 +1547,7 @@ elif st.session_state.page == "Models Results":
                     
                 elif "sentiment_prediction" in selected_model_path:
                     col1, col2 = st.columns([3, 4])
-                    results = calculate_metrics(filtered_reviews, "star_based_sentiment", f"predictions_{name}")
+                    results = calculate_metrics(reviews, "star_based_sentiment", f"predictions_{name}")
                     with col1:
                         st.write("##### Metrics:")
                         st.markdown(f"""
@@ -1602,7 +1602,7 @@ elif st.session_state.page == "Models Results":
                     with col2:
                         st.write("")
                         st.write("")
-                        img_stream = heatmap(filtered_reviews, "star_based_sentiment", f"predictions_{name}")
+                        img_stream = heatmap(reviews, "star_based_sentiment", f"predictions_{name}")
                         st.image(img_stream, caption="Heatmap of Predictions", use_container_width=True)
 
 
@@ -1632,8 +1632,8 @@ elif st.session_state.page == "Models Results":
                     st.write("##### Word Clouds by Prediction")
                     try:
                         if "word_clouds_by_prediction_sent" not in st.session_state:
-                            st.session_state.word_clouds_by_prediction_sent = create_tfidf_wordcloud(filtered_reviews, rating_column=f"predictions_{name}")
-                        records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
+                            st.session_state.word_clouds_by_prediction_sent = create_tfidf_wordcloud(reviews, rating_column=f"predictions_{name}")
+                        records_per_prediction = reviews.groupby(f"predictions_{name}").size().to_dict()
                         word_clouds_available = {
                             pred: st.session_state.word_clouds_by_prediction_sent[pred] 
                             for pred in st.session_state.word_clouds_by_prediction_sent
