@@ -346,7 +346,7 @@ elif st.session_state.page == "Filter Products":
 
             selected_stores = st.multiselect("Filter by stores (optional):", stores)
 
-            min_text_length = st.number_input("Minimal number of words in review", min_value=1, value=20)
+            min_text_length = st.number_input("Minimal number of words in review", min_value=1, value=10)
             start_date = st.date_input("Start date:", value=pd.to_datetime("2018-01-01"))
             end_date = st.date_input("End date:", value=pd.to_datetime("2018-03-01"))
             min_reviews_per_product = st.number_input("Minimal number of reviews per product", min_value=1, value=10)
