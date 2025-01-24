@@ -438,19 +438,19 @@ elif st.session_state.page == "Filter Products":
             st.session_state.selected_models = []
 
         model_descriptions = {
-            "bert_classification": "Predicts ratings using classification.",
-            "bert_regression": "Predicts ratings using regression.",
-            "bert_sentiment_prediction": "Predicts sentiment."
+            "BERT classification": "Predicts ratings using classification.",
+            "BERT regression": "Predicts ratings using regression.",
+            "BERT sentiment prediction": "Predicts sentiment."
         }
 
         # Display descriptions for the models
         st.write("#### Models Descriptions")
-        st.write("- **bert_classification**: Predicts ratings using classification.")
-        st.write("- **bert_regression**: Predicts ratings using regression.")
-        st.write("- **bert_sentiment_prediction**: Predicts sentiment.")
+        st.write("- **BERT classification**: Predicts ratings using classification.")
+        st.write("- **BERT regression**: Predicts ratings using regression.")
+        st.write("- **BERT sentiment prediction**: Predicts sentiment.")
 
         # Allow the user to select a model
-        model_name = st.selectbox("Choose a model:", ["bert_classification", "bert_regression", "bert_sentiment_prediction"], key="model_name")
+        model_name = st.selectbox("Choose a model:", ["BERT classification", "BERT regression", "BERT sentiment prediction"], key="model_name")
 
         # Display the selected model
         st.write(f"Selected Model: {model_name}")
@@ -506,7 +506,7 @@ elif st.session_state.page == "Filter Products":
                         try: 
                             for idx, model_info in enumerate(st.session_state.selected_models):
                                 name = model_info["parameters"]["localname"]
-                                if model_info["model_name"] == "bert_classification":
+                                if model_info["model_name"] == "BERT classification":
                                     model_path = rf".\models\classification\{name}"
                                     filtered_reviews[f'target_{name}'] = [int(x)-1 for x in filtered_reviews["rating"]]
                                     with st.spinner(f"Training model {name}..."):    
@@ -514,7 +514,7 @@ elif st.session_state.page == "Filter Products":
                                     with st.spinner(f"Predicting on model {name}..."):
                                         filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)+1
                                     st.success(f"Prediction with {name} completed successfully!")
-                                if model_info["model_name"] == "bert_regression":
+                                if model_info["model_name"] == "BERT regression":
                                     model_path = rf".\models\regression\{name}"
                                     filtered_reviews[f'target_{name}'] = filtered_reviews["rating"]
                                     with st.spinner(f"Training model {name}..."):    
@@ -522,7 +522,7 @@ elif st.session_state.page == "Filter Products":
                                     with st.spinner(f"Predicting on model {name}..."):
                                         filtered_reviews[f"predictions_{name}"]=predict_on_tuned_model(filtered_reviews,model_path)
                                     st.success(f"Prediction with {name} completed successfully!")
-                                if model_info["model_name"]=="bert_sentiment_prediction":
+                                if model_info["model_name"]=="BERT sentiment prediction":
                                     model_path = rf".\models\sentiment_prediction\{name}"
                                     with st.spinner(f"Training model {name}..."):    
                                         train_model(filtered_reviews,target="star_based_sentiment",num_classes=2, **model_info["parameters"])
@@ -795,7 +795,7 @@ elif st.session_state.page == "Models Results":
                         st.write("")
                         st.write("")
                         st.write("")
-                        if model_info["model_name"] == "bert_classification":
+                        if model_info["model_name"] == "BERT classification":
                             col1, col2 = st.columns([3, 4])
 
                             results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
@@ -901,7 +901,7 @@ elif st.session_state.page == "Models Results":
                                 st.error(f"Error generating word clouds: {e}")
 
                             
-                        if model_info["model_name"] == "bert_regression":
+                        if model_info["model_name"] == "BERT regression":
 
                             col1, col2 = st.columns([3, 4])
                             results = calculate_metrics(filtered_reviews, "rating", f"predictions_{name}")
@@ -1006,7 +1006,7 @@ elif st.session_state.page == "Models Results":
                             except Exception as e:
                                 st.error(f"Error generating word clouds: {e}")
 
-                        if model_info["model_name"]=="bert_sentiment_prediction":
+                        if model_info["model_name"]=="BERT sentiment prediction":
                             col1, col2 = st.columns([3, 4])
                             results = calculate_metrics(filtered_reviews, "star_based_sentiment", f"predictions_{name}")
                             with col1:
