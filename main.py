@@ -9,8 +9,13 @@ def main():
         return
 
     try:
-        print(f"Launching Streamlit app: {app_path}")
-        subprocess.run(["streamlit", "run", app_path], check=True)
+        streamlit_command = [
+            "streamlit", "run", app_path, "--server.runOnSave=true"
+        ]
+        
+        print(f"Launching Streamlit app: {' '.join(streamlit_command)}")
+        
+        subprocess.run(streamlit_command, check=True, cwd=os.getcwd())
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running the Streamlit app: {e}")
     except Exception as e:

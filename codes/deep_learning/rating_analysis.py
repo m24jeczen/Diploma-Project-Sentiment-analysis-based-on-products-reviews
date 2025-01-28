@@ -6,6 +6,7 @@ from sklearn.metrics import mean_absolute_error, accuracy_score, f1_score
 from io import BytesIO
 import matplotlib
 import re 
+import matplotlib.pyplot as plt
 
 
 def calculate_metrics(df, label_col='label', prediction_col='prediction'):
@@ -94,44 +95,12 @@ def heatmap(df, column1, column2):
     ax.figure.set_facecolor(background_color)
     ax.set_facecolor(background_color)
 
-    # Save the heatmap to a BytesIO stream for Streamlit compatibility
     img_stream = BytesIO()
     plt.savefig(img_stream, format="png", bbox_inches="tight", facecolor=background_color)
-    img_stream.seek(0)  # Reset the stream to the beginning for reading
+    img_stream.seek(0)  
     plt.close()
 
-    # Return the image stream for Streamlit
     return img_stream
-
-
-
-
-
-def plot_number_of_words_percentages(data, limit=500):
-    numbers = data["text"].str.split().str.len()
-    sorted_numbers = np.sort(numbers)
-    cumulative_probabilities = 100*np.arange(1, len(sorted_numbers) + 1) / len(sorted_numbers)
-
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(sorted_numbers, cumulative_probabilities)
-
-    plt.title('Cumulative Distribution of Words Length of Reviews', fontsize=16)
-    plt.xlabel('Words per review', fontsize=14)
-    plt.ylabel('Percentage of all reviews', fontsize=14)
-
-    plt.grid(alpha=0.7)
-    plt.xlim(0, limit)
-    plt.ylim(bottom=0)
-    plt.xticks(np.arange(0, limit, limit//10))
-
-# Ustawianie znaczników na osi Y co 0.1
-    plt.yticks(np.arange(0, 1.1, 0.1))
-    plt.show()
-
-
-
-from io import BytesIO
 
 def plot_number_of_words_percentages_for_app(data, limit=500):
     # Update the color theme from the app configuration
@@ -177,68 +146,13 @@ def plot_number_of_words_percentages_for_app(data, limit=500):
 
 
 
-def plot_monthly_avg(data, label = "rating",pointers = 20):
-    data['date'] = pd.to_datetime(data['timestamp'])
-    # Usuń wiersze z nieprawidłowymi datami
-    data = data.dropna(subset=['date'])
-
-    # Dodanie kolumny z miesiącem i rokiem w formacie 'MM-YYYY'
-    data['date'] = data['date'].dt.strftime('%Y-%m-%d')
-
-    # Posortuj ramkę danych po dacie
-    data = data.sort_values(by='date')
-
-    # Oblicz skumulowaną średnią
-    data['cumulative_average'] = data[label].expanding().mean()
-    markers =  np.linspace(0, len(data) - 1, pointers, dtype=int)
-    plot_data = data.iloc[markers]
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(plot_data['date'], plot_data['cumulative_average'], marker='o')
-    plt.title('Change of average score through time', fontsize=14)
-    plt.xlabel('Date', fontsize=12)
-    plt.ylabel('Average score', fontsize=12)
-    plt.xticks(rotation=45)
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-def heatmap_2(df,column1,column2):
-
-    cross_tab = pd.crosstab(df[column1], df[column2])
-
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cross_tab, annot=True, cmap="coolwarm", fmt="d")
-    plt.title("Heatmap of correlation beetwen true values and prediction")
-    plt.xlabel(column2)
-    plt.ylabel(column1)
-    plt.show()
-
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from io import BytesIO
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from io import BytesIO
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from io import BytesIO
-
 def plot_monthly_avg_app(data, label="rating", pointers=20):
-    # Update the color theme from the app configuration
-    primary_color = "#F6B17A"  # Line color
-    background_color = "#1C2138"  # Entire image background
-    secondary_background_color = "#424769"  # Gridlines and plot background
-    text_color = "#E2E8F0"  # Text color
-    light_grid_color = "#5B637C"  # Lighter gridlines
+    primary_color = "#F6B17A"  
+    background_color = "#1C2138"  
+    secondary_background_color = "#424769"  
+    text_color = "#E2E8F0"  
+    light_grid_color = "#5B637C"  
 
-    # Data processing
     data['date'] = pd.to_datetime(data['timestamp'])
     data = data.dropna(subset=['date'])
     data['date'] = data['date'].dt.strftime('%Y-%m-%d')
@@ -247,7 +161,6 @@ def plot_monthly_avg_app(data, label="rating", pointers=20):
     markers = np.linspace(0, len(data) - 1, pointers, dtype=int)
     plot_data = data.iloc[markers]
 
-    # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(plot_data['date'], plot_data['cumulative_average'], marker='o', color=primary_color)
     plt.title(f'Change of {label} score through time', fontsize=14, color=text_color)
@@ -256,7 +169,6 @@ def plot_monthly_avg_app(data, label="rating", pointers=20):
     plt.xticks(rotation=45, color=text_color)
     plt.yticks(color=text_color)
 
-    # Explicitly set tick colors for both axes
     plt.gca().tick_params(axis='x', colors=text_color)
     plt.gca().tick_params(axis='y', colors=text_color)
 
@@ -264,10 +176,8 @@ def plot_monthly_avg_app(data, label="rating", pointers=20):
     plt.gca().set_facecolor(secondary_background_color)
     plt.tight_layout()
 
-    # Set the overall background color
     plt.gcf().patch.set_facecolor(background_color)
 
-    # Save plot to a BytesIO stream
     img_stream = BytesIO()
     plt.savefig(img_stream, format="png", bbox_inches="tight", facecolor=background_color)
     img_stream.seek(0)
@@ -275,45 +185,12 @@ def plot_monthly_avg_app(data, label="rating", pointers=20):
     return img_stream
 
 
-
-
-def distribiution_of_rating(df, label = "rating"):
-    rating_counts = df[label].value_counts(normalize=True) * 100  # Normalize=True gives proportions
-    rating_counts = rating_counts.sort_index()  # Ensure ratings are sorted from 1 to 5
-
-    # Bar positions and width
-    ratings = rating_counts.index
-    percentages = rating_counts.values
-    bar_width = 0.6  # Width of the bars
-
-    # Create the bar plot
-    plt.figure(figsize=(8, 6))
-    plt.bar(ratings, percentages, width=bar_width, edgecolor='black', align='center')
-
-    # Add percentage values above the bars
-    for i, percentage in enumerate(percentages):
-        plt.text(ratings[i], percentage + 1, f'{percentage:.1f}%', ha='center', fontsize=10)
-
-    # Add labels and title
-    plt.title('Percentage Frequency of Ratings', fontsize=16)
-    plt.xlabel('Rating', fontsize=12)
-    plt.ylabel('Percentage Frequency (%)', fontsize=12)
-    plt.xticks(ticks=ratings, labels=ratings)  # Ensure x-ticks are aligned with ratings
-    plt.ylim(0, max(percentages) + 5)  # Add some padding above the tallest bar
-
-    # Ensure no bars are touching
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.show()
-
 def distribiution_of_rating_for_app(df, label="rating"):
-    # Setting up the theme colors
-    primary_color = "#F6B17A"  # Primary color for the bars
-    background_color = "#1C2138"  # Overall background color
-    secondary_background_color = "#424769"  # Not used directly here
-    text_color = "#E2E8F0"  # Color of text
+    primary_color = "#F6B17A"  
+    background_color = "#1C2138"  
+    secondary_background_color = "#424769"  
+    text_color = "#E2E8F0"  
 
-    # Update the default matplotlib parameters to match the theme
     matplotlib.rcParams.update({
         'text.color': text_color,
         'axes.labelcolor': text_color,
@@ -324,34 +201,28 @@ def distribiution_of_rating_for_app(df, label="rating"):
         'axes.facecolor': background_color
     })
 
-    rating_counts = df[label].value_counts(normalize=True) * 100  # Normalize=True gives proportions
-    rating_counts = rating_counts.sort_index()  # Ensure ratings are sorted from 1 to 5
+    rating_counts = df[label].value_counts(normalize=True) * 100  
+    rating_counts = rating_counts.sort_index()  
 
-    # Bar positions and width
     ratings = rating_counts.index
     percentages = rating_counts.values
-    bar_width = 0.6  # Width of the bars
+    bar_width = 0.6  
 
-    # Create the bar plot
     plt.figure(figsize=(8, 6))
     plt.bar(ratings, percentages, width=bar_width, edgecolor='black', align='center', color=primary_color)
 
-    # Add percentage values above the bars
     for i, percentage in enumerate(percentages):
         plt.text(ratings[i], percentage + 1, f'{percentage:.1f}%', ha='center', fontsize=10, color=text_color)
 
-    # Add labels and title
     plt.title(f'Percentage Frequency of {label}', fontsize=16, color=text_color)
     plt.xlabel(label, fontsize=12)
     plt.ylabel('Percentage Frequency (%)', fontsize=12)
-    plt.xticks(ticks=ratings, labels=ratings)  # Ensure x-ticks are aligned with ratings
-    plt.ylim(0, max(percentages) + 5)  # Add some padding above the tallest bar
+    plt.xticks(ticks=ratings, labels=ratings)  
+    plt.ylim(0, max(percentages) + 5)  
 
-    # Ensure no bars are touching
     plt.grid(axis='y', linestyle='--', alpha=0.7, color=text_color)
     plt.tight_layout()
 
-    # Save plot to a BytesIO stream
     img_stream = BytesIO()
     plt.savefig(img_stream, format="png", bbox_inches="tight")
     img_stream.seek(0)
