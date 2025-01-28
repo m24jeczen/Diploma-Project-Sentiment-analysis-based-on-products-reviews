@@ -18,10 +18,11 @@ download_and_save_hugging_face_models()
 There are 2 ways to run the app:
 
 1. Call the `main()` function directly by running:
-   ```bash
-   python main.py
+```bash
+python main.py
+```
 
 2. Alternatively, run the following command in your terminal:
-```
+```bash
 streamlit run .\codes\GUI\app.py --server.runOnSave=true
 ```
