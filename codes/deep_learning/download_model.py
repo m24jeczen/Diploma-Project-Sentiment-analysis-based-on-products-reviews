@@ -221,16 +221,7 @@ def train_model(dataframe, task = "classification", target="rating",num_classes=
         
 
 def get_available_models(task_type, parent_dir="models"):
-    """
-    Get available models based on the task type (classification, regression, or sentiment_prediction).
 
-    Args:
-        task_type (str): The task type, either 'classification', 'regression', or 'sentiment_prediction'.
-        parent_dir (str): The parent directory containing the model directories.
-
-    Returns:
-        dict: A dictionary of available models for the specified task type.
-    """
     models_dir = f"./{parent_dir}"
     available_models = {}
 

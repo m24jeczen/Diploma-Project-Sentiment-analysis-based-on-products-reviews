@@ -390,15 +390,6 @@ def display_topic_words(selected_topic, topic_word_menu):
         st.warning("Selected topic not found.")
 
 
-def create_wordcloud_from_df(df):
-    text = " ".join(df['text'].dropna().astype(str))
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis("off")
-    plt.show()
-
-
 def create_tfidf_wordcloud(df, rating_column='rating', text_column='text'):
     # Ensure there is data in the dataframe
     if df.empty:

@@ -1,7 +1,6 @@
 import pandas as pd
 from sklearn.utils import resample
 
-# 
 def balance_data(data, label):
     # Find the minimum class size
     min_count = data[label].value_counts().min()
