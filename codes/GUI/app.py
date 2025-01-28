@@ -25,7 +25,7 @@ from codes.deep_learning.preprocessing import *
 from codes.deep_learning.rating_analysis import *
 
 def process_file_in_chunks(file):
-    chunk_size = 10000  # Adjust the chunk size based on your needs
+    chunk_size = 10000  
     chunk_list = []
 
     for chunk in pd.read_csv(file, chunksize=chunk_size):
@@ -34,10 +34,8 @@ def process_file_in_chunks(file):
     df = pd.concat(chunk_list)
     return df
 
-# Set page configuration
 st.set_page_config(page_title="Amazon Products", layout="wide")
 
-# Inside styles css is the custom colors for the app
 css_file_path = os.path.join(project_root, "static", "styles.css")
 with open(css_file_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -73,7 +71,6 @@ if "selected_model_name" not in st.session_state:
 if "selected_model_path" not in st.session_state:
     st.session_state.selected_model_path = None
 
-# Navigation bar for switching between pages (after filtering)
 def render_nav_bar():
     return st.radio(
         "",
@@ -116,7 +113,7 @@ st.markdown(
 )
 
 
-# Menu Page (Main Entry Point)
+# Menu Page 
 if st.session_state.page == "Menu":
     st.write("")
     cols = st.columns([1,5])
@@ -193,12 +190,10 @@ elif st.session_state.page == "Filter Products":
             st.dataframe(df_external.head(100), height=400)
             
             rating_column = None
-            # Display columns for selection
             columns = df_external.columns.tolist()
             text_column = st.selectbox("Select the text column:", columns)
             rating_column = st.selectbox("Select the rating column:", [None] + columns)
 
-            # Save column selections to session state
             df_external.rename(columns={text_column: 'text'}, inplace=True)
 
             st.session_state.text_column = 'text'
@@ -209,7 +204,7 @@ elif st.session_state.page == "Filter Products":
                 positive_threshold = st.radio(
                     "Select the positive threshold for ratings:", 
                     options=[2,3,4,5], 
-                    index=2  # Default to 4
+                    index=2  
                 )
                 st.success(f"Rating column set to: {rating_column}")
                 df_external.rename(columns={rating_column: 'rating'}, inplace=True)
@@ -244,28 +239,21 @@ elif st.session_state.page == "Filter Products":
         st.write("### Available local trained models for prediction:")
         st.write("### Model Selection")
 
-        # Step 1: Choose task type
-        # Step 1: Choose task type 
         task_type = st.radio("Select the task type:", ("classification", "regression", "sentiment_prediction"), key="task_type_radio")
 
-        # Step 2: Show available models dynamically
         st.session_state.available_models = get_available_models(task_type, parent_dir="models")
-        #print("Available models:", st.session_state.available_models)
 
         if st.session_state.get("available_models"):
             st.write(f"#### Available {task_type.replace('_', ' ').capitalize()} Models:")
 
-            # Keep the selection box visible until a model is confirmed
             selected_available_model_name = st.selectbox(
                 "Select a pre-trained model:", 
                 list(st.session_state.available_models.keys()), 
                 key="model_selectbox"
             )
 
-            # Store the selection immediately in the session state
             st.session_state["current_selected_model"] = selected_available_model_name
 
-            # Add a confirm button to finalize the selection
             if st.button("Confirm Selected Model"):
                 st.session_state.selected_available_model_name = st.session_state["current_selected_model"]
                 st.session_state.selected_model_path = st.session_state.available_models[st.session_state["current_selected_model"]]
@@ -314,7 +302,6 @@ elif st.session_state.page == "Filter Products":
                             st.session_state.df_external = df_external
 
                         st.success("Prediction on VADER completed successfully!")
-                        #st.dataframe(df_external.head(100), height=400)
                     
                     except Exception as e:  
                         st.error(f"An error occurred while predicting on VADER: {e}")
@@ -360,7 +347,7 @@ elif st.session_state.page == "Filter Products":
             positive_threshold = st.radio(
                 "Select the positive threshold for ratings:", 
                 options=[2,3,4,5], 
-                index=2  # Default to 4
+                index=2  
             )
             search_value = st.text_input("Filter products by name (optional)")
 
@@ -408,23 +395,19 @@ elif st.session_state.page == "Filter Products":
         st.write("### Available trained models for prediction:")
 
 
-        # Step 1: Choose task type
         task_type = st.radio("Select the task type:", ("classification", "regression", "sentiment_prediction"), key="task_type_radio")
 
-        # Step 2: Show available models dynamically
         st.session_state.available_models = get_available_models(task_type, parent_dir="models")
 
         if st.session_state.get("available_models"):
             st.write(f"#### Available {task_type.replace('_', ' ').capitalize()} Models:")
 
-            # Keep the selection box visible until a model is confirmed
             selected_available_model_name = st.selectbox(
                 "Select a pre-trained model:", 
                 list(st.session_state.available_models.keys()), 
                 key="model_selectbox"
             )
 
-            # Add a confirm button to finalize the selection
             if st.button("Confirm Selected Model"):
                 st.session_state.selected_available_model_name = selected_available_model_name
                 st.session_state.selected_model_path = st.session_state.available_models[selected_available_model_name]
@@ -439,7 +422,6 @@ elif st.session_state.page == "Filter Products":
 
         st.write("## Train new model")
 
-        # Adding multiple model selection functionality
         if "selected_models" not in st.session_state:
             st.session_state.selected_models = []
 
@@ -449,19 +431,15 @@ elif st.session_state.page == "Filter Products":
             "BERT sentiment prediction": "Predicts sentiment."
         }
 
-        # Display descriptions for the models
         st.write("#### Models Descriptions")
         st.write("- **BERT classification**: Predicts ratings using classification.")
         st.write("- **BERT regression**: Predicts ratings using regression.")
         st.write("- **BERT sentiment prediction**: Predicts sentiment.")
 
-        # Allow the user to select a model
         model_name = st.selectbox("Choose a model:", ["BERT classification", "BERT regression", "BERT sentiment prediction"], key="model_name")
 
-        # Display the selected model
         st.write(f"Selected Model: {model_name}")
 
-        # Show training parameters below model and prediction target selection
         st.write("#### Training Parameters")
         max_epochs = st.number_input("Max Epochs", min_value=1, value=3, step=1, key="max_epochs")
         batch_size = st.number_input("Batch Size", min_value=1, value=16, step=1, key="batch_size")
@@ -490,7 +468,6 @@ elif st.session_state.page == "Filter Products":
             })
             st.success(f"Added model: {model_name} with parameters.")
         button_name = "Predict"
-        # Display selected models and parameters
         if st.session_state.selected_models:
             button_name = "Train and Predict"
             st.write("### Selected Models")
@@ -614,20 +591,17 @@ elif st.session_state.page == "Ratings and words analysis":
 
         st.write("#### Word Clouds by Star Rating")
         try:
-            # Only generate word clouds if not already cached
             if "word_clouds_by_rating" not in st.session_state:
                 st.write("Generating word clouds...")
                 st.session_state.word_clouds_by_rating = create_tfidf_wordcloud(reviews)
             
             records_per_rating = reviews.groupby('rating').size().to_dict()
-            # Filter only ratings with data and word clouds generated
             word_clouds_available = {
                 rating: st.session_state.word_clouds_by_rating[rating] 
                 for rating in st.session_state.word_clouds_by_rating
                 if rating in st.session_state.word_clouds_by_rating
             }
             
-            # Display only columns for ratings with data
             unique_ratings = sorted(word_clouds_available.keys())
             if unique_ratings:
                 cols = st.columns(len(unique_ratings))
@@ -787,9 +761,7 @@ elif st.session_state.page == "Models Results":
     if ("filtered_reviews" in st.session_state and not st.session_state.filtered_reviews.empty) or ("df_external" in st.session_state and "rating_column" in st.session_state and st.session_state.rating_column is not None):
         if "df_external" in st.session_state and "rating_column" in st.session_state and st.session_state.rating_column is not None:
             df_external = st.session_state.df_external
-            #st.dataframe(df_external.head(100), height=400)
             reviews = st.session_state.df_external
-            #st.dataframe(reviews.head(100), height=400)
         if ("rating_column" in st.session_state and st.session_state.rating_column) or not st.session_state.filtered_reviews.empty:
             if not st.session_state.filtered_reviews.empty:
                 reviews = st.session_state.filtered_reviews
@@ -875,17 +847,14 @@ elif st.session_state.page == "Models Results":
                                 st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                             st.write("#### Word Clouds by Prediction")
                             try:
-                                # Dynamically construct the session state variable name
                                 word_cloud_key = f"word_clouds_by_prediction_{name}"
                                 
-                                # Check if the variable already exists in session state
                                 if word_cloud_key not in st.session_state:
                                     st.session_state[word_cloud_key] = create_tfidf_wordcloud(
                                         filtered_reviews, 
                                         rating_column=f"predictions_{name}"
                                     )
                                 
-                                # Access the word cloud data dynamically
                                 word_clouds_by_prediction = st.session_state[word_cloud_key]
                                 records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                                 word_clouds_available = {
@@ -981,17 +950,14 @@ elif st.session_state.page == "Models Results":
                                 st.image(plot_stream, caption="Monthly Average Rating", use_container_width=True)
                             st.write("##### Word Clouds by Prediction")
                             try:
-                                # Dynamically construct the session state variable name
                                 word_cloud_key = f"word_clouds_by_prediction_{name}"
                                 
-                                # Check if the variable already exists in session state
                                 if word_cloud_key not in st.session_state:
                                     st.session_state[word_cloud_key] = create_tfidf_wordcloud(
                                         filtered_reviews, 
                                         rating_column=f"predictions_{name}"
                                     )
                                 
-                                # Access the word cloud data dynamically
                                 word_clouds_by_prediction = st.session_state[word_cloud_key]
                                 records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                                 word_clouds_available = {
@@ -1085,17 +1051,14 @@ elif st.session_state.page == "Models Results":
                                 st.image(plot_stream, caption="Monthly Average Label", use_container_width=True)
                             st.write("##### Word Clouds by Prediction")
                             try:
-                                # Dynamically construct the session state variable name
                                 word_cloud_key = f"word_clouds_by_prediction_{name}"
                                 
-                                # Check if the variable already exists in session state
                                 if word_cloud_key not in st.session_state:
                                     st.session_state[word_cloud_key] = create_tfidf_wordcloud(
                                         filtered_reviews, 
                                         rating_column=f"predictions_{name}"
                                     )
                                 
-                                # Access the word cloud data dynamically
                                 word_clouds_by_prediction = st.session_state[word_cloud_key]
                                 records_per_prediction = filtered_reviews.groupby(f"predictions_{name}").size().to_dict()
                                 word_clouds_available = {
@@ -1118,7 +1081,6 @@ elif st.session_state.page == "Models Results":
 
             else: 
                 reviews = st.session_state.df_external
-            #st.dataframe(reviews.head(100), height=400)
             if st.session_state.predict_on_roberta_selected and st.session_state.predict_on_roberta_selected==True:
                 st.write('#### Results for Model: RoBERTa')
 
@@ -1328,7 +1290,6 @@ elif st.session_state.page == "Models Results":
                 except Exception as e:
                     st.error(f"Error generating word clouds: {e}")
 
-            # The pre-trained models        
             if "selected_model_path" in st.session_state and "selected_available_model_name" in st.session_state and st.session_state.selected_available_model_name is not None:
                 selected_model_path = st.session_state.selected_model_path
                 name = st.session_state.selected_available_model_name
@@ -1712,7 +1673,7 @@ elif st.session_state.page == "Models Results":
                 st.write("##### Word Clouds by Prediction")
                 try:
                     if "word_clouds_by_prediction_vader_2" not in st.session_state:
-                        st.session_state.word_clouds_by_prediction_vader = create_tfidf_wordcloud(df_external, rating_column="predictions_vader")
+                        st.session_state.word_clouds_by_prediction_vader_2 = create_tfidf_wordcloud(df_external, rating_column="predictions_vader")
                     records_per_prediction =df_external.groupby("predictions_vader").size().to_dict()
                     word_clouds_available_vader = {
                         pred: st.session_state.word_clouds_by_prediction_vader_2[pred] 
