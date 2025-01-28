@@ -21,6 +21,7 @@ There are 2 ways to run the app:
    ```bash
    python main.py
 
-2. Alternatively, run the following command in your terminal::
+2. Alternatively, run the following command in your terminal:
+```
 streamlit run .\codes\GUI\app.py --server.runOnSave=true
-
+```
