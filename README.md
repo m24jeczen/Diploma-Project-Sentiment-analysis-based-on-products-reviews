@@ -4,7 +4,7 @@ This is our Bachelor's diploma thesis project.
 
 ## Project describtion
 
-## Code describtion
+## How to launch and close the app:
 ### 0. Running the app for the first time 
 
 To set up the necessary models before launching the app, run the following commands in your terminal:
@@ -31,21 +31,30 @@ streamlit run .\codes\GUI\app.py --server.runOnSave=true
 To stop the app, simply press `Ctrl + C` in your console or terminal.
 
 ## Repository contents
-#### .streamlit:
+### .streamlit:
 
 In this directory, there is the main app theme implementation
 
-#### codes:
-##### GUI:
+### codes:
+#### GUI:
 - `app.py`: here is the implementation of GUI, done with streamlit
-##### deep_learning:
+#### deep_learning:
 - `download_model.py`:
 - `predict_on_model.py`:
 - `preprocessing.py`:
 - `rating_analysis.py`:
-##### loading_and_filtering:
-##### topic_modeling:
-##### visualizations.py:
+#### loading_and_filtering:
+- `data_loader.py`:
+- `filter.py`:
+- `filter_test.py`:
+- `parameters.py`:
+- `prepare_category.py`:
+#### topic_modeling:
+- `LDA.py`:
+- `text_preprocessing.py`:
+#### output_data:
+- `sephora_1000.csv`:
+#### visualizations.py:
 
 
 
