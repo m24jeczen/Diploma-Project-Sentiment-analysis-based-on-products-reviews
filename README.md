@@ -31,5 +31,5 @@ streamlit run .\codes\GUI\app.py --server.runOnSave=true
 To stop the app, simply press `Ctrl + C` in your console or terminal.
 
 ## Authors:
-@m24jeczen
-@Michal-Iwicki
+- [Magdalena Jeczeń](https://github.com/m24jeczen)  
+- [Michal Iwicki](https://github.com/Michal-Iwicki)
