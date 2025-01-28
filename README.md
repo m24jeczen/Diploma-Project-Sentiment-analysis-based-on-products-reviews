@@ -30,6 +30,21 @@ streamlit run .\codes\GUI\app.py --server.runOnSave=true
 ### 2. Stopping the app
 To stop the app, simply press `Ctrl + C` in your console or terminal.
 
+## Repository contents
+#### .streamlit:
+
+In this directory, there is the main app theme implementation
+
+#### codes:
+##### GUI:
+##### deep_learning:
+##### loading_and_filtering:
+##### topic_modeling:
+##### visualizations.py:
+
+
+
+
 ## Authors:
 - [Magdalena Jeczeń](https://github.com/m24jeczen)  
 - [Michal Iwicki](https://github.com/Michal-Iwicki)
