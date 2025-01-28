@@ -37,7 +37,12 @@ In this directory, there is the main app theme implementation
 
 #### codes:
 ##### GUI:
+- `app.py`: here is the implementation of GUI, done with streamlit
 ##### deep_learning:
+- `download_model.py`:
+- `predict_on_model.py`:
+- `preprocessing.py`:
+- `rating_analysis.py`:
 ##### loading_and_filtering:
 ##### topic_modeling:
 ##### visualizations.py:
