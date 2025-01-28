@@ -18,8 +18,13 @@ def main():
         subprocess.run(streamlit_command, check=True, cwd=os.getcwd())
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running the Streamlit app: {e}")
+    except KeyboardInterrupt:
+        print("\nStreamlit app stopped by user.")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nApplication terminated by user.")
