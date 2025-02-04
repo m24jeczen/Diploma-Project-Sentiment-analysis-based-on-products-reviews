@@ -4,6 +4,8 @@ This is our Bachelor's diploma thesis project.
 
 ## Project describtion
 
+The project focuses on analyzing customer reviews using natural language processing (NLP) techniques to extract meaningful insights about sentiment and key themes. By leveraging machine learning models, it aims to classify and predict customer sentiment based on textual input, even in the absence of explicit ratings. The study is centered on Amazon reviews, which provide a vast dataset for training and evaluating sentiment analysis models. The developed tool enables users to automatically analyze aggregated reviews, identify patterns in customer opinions, and gain a deeper understanding of product perception. Through sentiment classification, word frequency analysis, and topic modeling, the project offers a data-driven approach to enhancing customer experience insights.
+
 ## How to launch and close the app:
 ### 0. Running the app for the first time 
 if you have access to a CUDA-capable graphics card we recommend install CUDA and use it for faster models training. Instructions:
@@ -63,21 +65,21 @@ In this directory, there is the main app theme implementation
 #### GUI:
 - `app.py`: here is the implementation of GUI, done with streamlit
 #### deep_learning:
-- `download_model.py`:
-- `predict_on_model.py`:
-- `preprocessing.py`:
-- `rating_analysis.py`:
+- `download_model.py`
+- `predict_on_model.py`
+- `preprocessing.py`
+- `rating_analysis.py`
 #### loading_and_filtering:
-- `data_loader.py`:
-- `filter.py`:
-- `filter_test.py`:
-- `parameters.py`:
-- `prepare_category.py`:
+- `data_loader.py`
+- `filter.py`
+- `filter_test.py`
+- `parameters.py`
+- `prepare_category.py`
 #### topic_modeling:
-- `LDA.py`:
-- `text_preprocessing.py`:
+- `LDA.py`
+- `text_preprocessing.py`
 #### output_data:
-- `sephora_1000.csv`:
+- `sephora_1000.csv`
 #### visualizations.py:
 
 
