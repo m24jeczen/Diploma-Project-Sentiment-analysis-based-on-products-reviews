@@ -6,6 +6,17 @@ This is our Bachelor's diploma thesis project.
 
 ## How to launch and close the app:
 ### 0. Running the app for the first time 
+if you have access to a CUDA-capable graphics card we recommend install CUDA and use it for faster models training. Instructions:
+https://pytorch.org/get-started/locally/
+
+Be sure that python satisfy < 3.12 (we recomend version 3.11.9) and to run comands:
+pip install --upgrade pip
+pip install -r requirements.txt
+
+Some packages could not install properly. Application can show errors with particular one. In this case try for example:
+pip install pyLDAvis
+or
+pip install wordcloud
 
 To set up the necessary models before launching the app, run the following commands in your terminal:
 
@@ -13,6 +24,14 @@ To set up the necessary models before launching the app, run the following comma
 python
 from codes.deep_learning.download_model import download_and_save_hugging_face_models
 download_and_save_hugging_face_models()
+
+import spacy
+from spacy.cli import download
+
+download("en_core_web_sm")
+
+import nltk
+nltk.download('wordnet')
 ```
 ### 1. Running the app
 There are 2 ways to run the app:
