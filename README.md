@@ -10,13 +10,18 @@ if you have access to a CUDA-capable graphics card we recommend install CUDA and
 https://pytorch.org/get-started/locally/
 
 Be sure that python satisfy < 3.12 (we recomend version 3.11.9) and to run comands:
+```
 pip install --upgrade pip
 pip install -r requirements.txt
-
+```
 Some packages could not install properly. Application can show errors with particular one. In this case try for example:
+```
 pip install pyLDAvis
+```
 or
+```
 pip install wordcloud
+```
 
 To set up the necessary models before launching the app, run the following commands in your terminal:
 
